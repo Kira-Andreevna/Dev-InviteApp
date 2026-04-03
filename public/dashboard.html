@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Мои открытки — InviteCard</title>
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/">✉️ <span>InviteCard</span></a>
+  <div class="navbar-nav">
+    <span id="userName" style="color:var(--text-muted);font-size:0.9rem"></span>
+    <a href="/editor" class="btn btn-primary btn-sm">+ Новая открытка</a>
+    <button class="btn btn-outline btn-sm" onclick="logout()">Выйти</button>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:2rem;padding-bottom:3rem">
+  <div class="flex items-center justify-between mb-2">
+    <h1 style="font-size:1.6rem;font-weight:700">Мои открытки</h1>
+    <a href="/editor" class="btn btn-primary">+ Создать</a>
+  </div>
+
+  <div id="cardsList">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- Модальное окно: QR + ссылка -->
+<div class="modal-overlay hidden" id="shareModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('shareModal')">×</button>
+    <h2>Поделиться приглашением</h2>
+    <div class="qr-container">
+      <img id="qrImg" src="" alt="QR-код">
+      <p class="qr-url" id="inviteUrl"></p>
+    </div>
+    <div class="flex gap-1 mt-2">
+      <button class="btn btn-primary w-full" onclick="copyLink()">Скопировать ссылку</button>
+      <a id="downloadQr" class="btn btn-outline" download="qr.png">Скачать QR</a>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: список гостей -->
+<div class="modal-overlay hidden" id="guestsModal">
+  <div class="modal" style="max-width:700px">
+    <button class="modal-close" onclick="closeModal('guestsModal')">×</button>
+    <h2>Список гостей</h2>
+    <div id="guestsContent"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<script>
+  let currentSlug = '';
+
+  // Проверка авторизации
+  fetch('/api/auth/me').then(r => r.json()).then(data => {
+    if (!data.loggedIn) return window.location.href = '/login.html';
+    document.getElementById('userName').textContent = `Привет, ${data.name}`;
+    loadCards();
+  });
+
+  function logout() {
+    fetch('/api/auth/logout', { method: 'POST' }).then(() => window.location.href = '/');
+  }
+
+  async function loadCards() {
+    const res = await fetch('/api/cards');
+    const cards = await res.json();
+    const container = document.getElementById('cardsList');
+
+    if (!cards.length) {
+      container.innerHTML = `
+        <div class="card text-center" style="padding:3rem">
+          <div style="font-size:3rem;margin-bottom:1rem">✉️</div>
+          <h3>Пока нет открыток</h3>
+          <p class="text-muted mt-1">Создайте первую пригласительную открытку</p>
+          <a href="/editor" class="btn btn-primary mt-2">Создать открытку</a>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = cards.map(c => `
+      <div class="card-item mt-1">
+        <div class="card-item-info">
+          <h3>${escHtml(c.title)}</h3>
+          <span>${c.template_name || 'Без шаблона'} · ${c.guest_count} гостей · ${formatDate(c.created_at)}</span>
+        </div>
+        <div class="card-item-actions">
+          <a href="/invite/${c.slug}" target="_blank" class="btn btn-outline btn-sm">Просмотр</a>
+          <button class="btn btn-outline btn-sm" onclick="openShare('${c.slug}')">QR / Ссылка</button>
+          <button class="btn btn-outline btn-sm" onclick="openGuests('${c.slug}')">Гости</button>
+          <a href="/editor?slug=${c.slug}" class="btn btn-outline btn-sm">Редактировать</a>
+          <button class="btn btn-danger btn-sm" onclick="deleteCard('${c.slug}')">Удалить</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function openShare(slug) {
+    currentSlug = slug;
+    const res = await fetch(`/api/cards/${slug}/qr`);
+    const data = await res.json();
+    document.getElementById('qrImg').src = data.qr;
+    document.getElementById('inviteUrl').textContent = data.url;
+    document.getElementById('downloadQr').href = data.qr;
+    document.getElementById('shareModal').classList.remove('hidden');
+  }
+
+  async function openGuests(slug) {
+    currentSlug = slug;
+    document.getElementById('guestsModal').classList.remove('hidden');
+    document.getElementById('guestsContent').innerHTML = '<div class="spinner"></div>';
+
+    const res = await fetch(`/api/cards/${slug}/guests`);
+    const data = await res.json();
+    const { guests, stats } = data;
+
+    let html = `
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-num">${stats.total}</div><div class="stat-label">Всего</div></div>
+        <div class="stat-card"><div class="stat-num">${stats.attending}</div><div class="stat-label">Придут</div></div>
+        <div class="stat-card"><div class="stat-num">${stats.not_attending}</div><div class="stat-label">Не придут</div></div>
+        <div class="stat-card"><div class="stat-num">${stats.minors}</div><div class="stat-label">Дети</div></div>
+      </div>`;
+
+    if (!guests.length) {
+      html += '<p class="text-muted text-center">Анкеты ещё не заполнены</p>';
+    } else {
+      html += `<div style="overflow-x:auto"><table class="guests-table">
+        <thead><tr>
+          <th>ФИО</th><th>Статус</th><th>Ребёнок</th><th>Заметка</th><th></th>
+        </tr></thead>
+        <tbody>
+          ${guests.map(g => `
+            <tr>
+              <td>${escHtml(g.full_name)}</td>
+              <td><span class="badge badge-${g.attending}">${attendingLabel(g.attending)}</span></td>
+              <td>${g.is_minor ? `Да (${g.minor_age || '?'} лет)` : '—'}</td>
+              <td>${g.note ? escHtml(g.note) : '—'}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteGuest('${slug}', ${g.id})">×</button></td>
+            </tr>`).join('')}
+        </tbody>
+      </table></div>`;
+    }
+
+    document.getElementById('guestsContent').innerHTML = html;
+  }
+
+  async function deleteGuest(slug, guestId) {
+    if (!confirm('Удалить запись гостя?')) return;
+    await fetch(`/api/cards/${slug}/guests/${guestId}`, { method: 'DELETE' });
+    openGuests(slug);
+  }
+
+  async function deleteCard(slug) {
+    if (!confirm('Удалить открытку? Это действие нельзя отменить.')) return;
+    await fetch(`/api/cards/${slug}`, { method: 'DELETE' });
+    loadCards();
+  }
+
+  function copyLink() {
+    const url = document.getElementById('inviteUrl').textContent;
+    navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована'));
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).classList.add('hidden');
+  }
+
+  function attendingLabel(v) {
+    return { yes: 'Придёт', no: 'Не придёт', maybe: 'Не знает' }[v] || v;
+  }
+
+  function formatDate(str) {
+    return new Date(str).toLocaleDateString('ru-RU');
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+</script>
+</body>
+</html>

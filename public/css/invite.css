@@ -1,0 +1,98 @@
+/* ===== Стили страницы приглашения ===== */
+.invite-page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1rem 4rem;
+}
+
+/* Блоки контента */
+.inv-hero {
+  background: linear-gradient(135deg, var(--primary), var(--accent));
+  color: white;
+  padding: 4rem 2rem;
+  text-align: center;
+  margin-bottom: 0;
+}
+.inv-hero h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin-bottom: 0.6rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+.inv-hero p {
+  font-size: 1.1rem;
+  opacity: 0.92;
+}
+
+.inv-block {
+  padding: 2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.inv-block:last-child { border-bottom: none; }
+.inv-block h2 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0.8rem;
+}
+.inv-block p {
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.inv-date {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
+}
+.inv-date-icon { font-size: 3rem; }
+.inv-date-info h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 0.3rem; }
+.inv-date-info .date-val { font-size: 1.3rem; font-weight: 700; }
+.inv-date-info .place-val { color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem; }
+
+.inv-palette {
+  padding: 2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.inv-palette h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 0.8rem; }
+
+.inv-gallery {
+  padding: 2rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.inv-gallery h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 0.8rem; }
+.inv-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+.inv-gallery-grid img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.inv-gallery-grid img:hover { transform: scale(1.03); }
+
+@media (max-width: 480px) {
+  .inv-hero h1 { font-size: 1.8rem; }
+  .inv-gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .inv-date { flex-direction: column; text-align: center; }
+}
+
+/* Лайтбокс */
+.lightbox {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.9);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000;
+  cursor: pointer;
+}
+.lightbox.hidden { display: none; }
+.lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
