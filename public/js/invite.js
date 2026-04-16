@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       : card.content_json;
 
     document.title = card.title + ' — InviteCard';
+
+    // Применяем дизайн
+    if (content.design) applyDesign(content.design);
+
     renderInvite(content.blocks || []);
 
     document.getElementById('loadingState').style.display = 'none';
@@ -22,6 +26,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('notFound').style.display = 'block';
   }
 });
+
+// ===== Применение дизайна на публичной странице =====
+function applyDesign(d) {
+  const root = document.documentElement;
+  if (d.colorPrimary) root.style.setProperty('--inv-primary', d.colorPrimary);
+  if (d.colorBg)      { root.style.setProperty('--inv-bg', d.colorBg); document.body.style.background = d.colorBg; }
+  if (d.colorText)    root.style.setProperty('--inv-text', d.colorText);
+  if (d.colorHero1)   root.style.setProperty('--inv-hero1', d.colorHero1);
+  if (d.colorHero2)   root.style.setProperty('--inv-hero2', d.colorHero2);
+  if (d.fontHeading)  root.style.setProperty('--inv-font-h', d.fontHeading);
+  if (d.fontBody)     root.style.setProperty('--inv-font-b', d.fontBody);
+  if (d.fontSize)     root.style.setProperty('--inv-fsize', d.fontSize + 'px');
+  if (d.radius != null) root.style.setProperty('--inv-radius', d.radius + 'px');
+
+  // Загружаем Google Fonts если нужно
+  const GFONTS = {
+    "'Playfair Display', serif":   'Playfair+Display',
+    "'Montserrat', sans-serif":    'Montserrat',
+    "'Lobster', cursive":          'Lobster',
+    "'Pacifico', cursive":         'Pacifico',
+    "'Raleway', sans-serif":       'Raleway',
+    "'Cormorant Garamond', serif": 'Cormorant+Garamond',
+    "'Nunito', sans-serif":        'Nunito',
+    "'Lato', sans-serif":          'Lato',
+    "'Open Sans', sans-serif":     'Open+Sans',
+    "'Roboto', sans-serif":        'Roboto',
+    "'Merriweather', serif":       'Merriweather',
+    "'PT Serif', serif":           'PT+Serif'
+  };
+  [d.fontHeading, d.fontBody].forEach(f => {
+    if (f && GFONTS[f]) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?family=${GFONTS[f]}:wght@400;600;700&display=swap`;
+      document.head.appendChild(link);
+    }
+  });
+
+  // Декорации
+  if (d.decoration) addDecorationOverlay(d.decoration);
+}
+
+const DECO_EMOJIS = {
+  confetti: ['🎊','🎉','✨','🎈','🎀'],
+  hearts:   ['❤️','💕','💖','💗','💓'],
+  flowers:  ['🌸','🌺','🌼','🌻','💐'],
+  stars:    ['⭐','✨','🌟','💫','⭐'],
+  leaves:   ['🍃','🌿','🍀','🌱','🍂'],
+  rings:    ['💍','✨','💎','🤍','💍'],
+  balloons: ['🎈','🎊','🎉','🎀','🎈']
+};
+
+function addDecorationOverlay(decoId) {
+  const emojis = DECO_EMOJIS[decoId];
+  if (!emojis) return;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden';
+  for (let i = 0; i < 16; i++) {
+    const span = document.createElement('span');
+    span.textContent = emojis[i % emojis.length];
+    span.style.cssText = `position:absolute;left:${Math.random()*95}%;top:${Math.random()*100}%;font-size:${1+Math.random()*1.5}rem;opacity:${0.1+Math.random()*0.2};`;
+    overlay.appendChild(span);
+  }
+  document.body.appendChild(overlay);
+}
 
 function renderInvite(blocks) {
   const container = document.getElementById('inviteContent');

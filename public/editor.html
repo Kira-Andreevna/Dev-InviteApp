@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Редактор открытки — InviteCard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="stylesheet" href="/css/main.css">
   <link rel="stylesheet" href="/css/editor.css">
 </head>
@@ -17,12 +18,10 @@
   </div>
 </nav>
 
-<!-- Шаг 1: выбор шаблона (показывается при создании новой) -->
+<!-- Шаг 1: выбор шаблона -->
 <div id="stepTemplate" class="container" style="padding-top:2rem;padding-bottom:3rem">
   <h2 class="section-title">Выберите шаблон или начните с нуля</h2>
-  <div class="grid-3" id="templatesList">
-    <div class="spinner"></div>
-  </div>
+  <div class="grid-3" id="templatesList"><div class="spinner"></div></div>
   <div class="mt-3 flex gap-2">
     <button class="btn btn-primary" onclick="startEditor()">Продолжить</button>
     <button class="btn btn-outline" onclick="selectTemplate(null)">С нуля</button>
@@ -35,26 +34,154 @@
 
     <!-- Боковая панель -->
     <div class="editor-sidebar">
-      <h3 style="margin-bottom:1.2rem;font-size:1rem;font-weight:700">Содержимое открытки</h3>
 
-      <div class="form-group">
-        <label>Заголовок открытки</label>
-        <input type="text" id="cardTitle" class="form-control" placeholder="Название вашего мероприятия">
+      <!-- Вкладки -->
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" onclick="switchTab('content')">📝 Контент</button>
+        <button class="sidebar-tab" onclick="switchTab('design')">🎨 Дизайн</button>
       </div>
 
-      <div id="blocksPanel"></div>
+      <!-- ===== Вкладка: Контент ===== -->
+      <div id="tabContent">
+        <div class="form-group" style="margin-top:1rem">
+          <label>Заголовок открытки</label>
+          <input type="text" id="cardTitle" class="form-control" placeholder="Название вашего мероприятия">
+        </div>
 
-      <button class="btn btn-outline w-full mt-2" onclick="toggleBlockPicker()">+ Добавить блок</button>
+        <div id="blocksPanel"></div>
 
-      <!-- Выбор типа блока -->
-      <div id="blockTypePicker" style="display:none;margin-top:1rem;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:1rem">
-        <p style="font-size:0.85rem;font-weight:600;margin-bottom:0.8rem;color:var(--text-muted)">Выберите тип блока:</p>
+        <button class="btn btn-outline w-full mt-2" onclick="toggleBlockPicker()">+ Добавить блок</button>
 
-        <p style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.4rem">📝 Текстовые</p>
-        <div id="textBlockBtns" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem"></div>
+        <div id="blockTypePicker" style="display:none;margin-top:1rem;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:1rem">
+          <p style="font-size:0.85rem;font-weight:600;margin-bottom:0.8rem;color:var(--text-muted)">Выберите тип блока:</p>
+          <p class="picker-section-label">📝 Текстовые</p>
+          <div id="textBlockBtns" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem"></div>
+          <p class="picker-section-label">🖼 Медиа</p>
+          <div id="mediaBlockBtns" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+        </div>
+      </div>
 
-        <p style="font-size:0.78rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-muted);margin-bottom:0.4rem">📁 Медиа</p>
-        <div id="mediaBlockBtns" style="display:flex;flex-direction:column;gap:0.4rem"></div>
+      <!-- ===== Вкладка: Дизайн ===== -->
+      <div id="tabDesign" style="display:none;margin-top:1rem">
+
+        <!-- Темы -->
+        <div class="design-section">
+          <div class="design-section-title">🎭 Тема оформления</div>
+          <div id="themesList" class="themes-grid"></div>
+        </div>
+
+        <!-- Цвета -->
+        <div class="design-section">
+          <div class="design-section-title">🎨 Цветовая гамма</div>
+          <div class="design-row">
+            <label>Основной цвет</label>
+            <input type="color" id="dColorPrimary" onchange="updateDesign('colorPrimary', this.value)">
+          </div>
+          <div class="design-row">
+            <label>Фон страницы</label>
+            <input type="color" id="dColorBg" onchange="updateDesign('colorBg', this.value)">
+          </div>
+          <div class="design-row">
+            <label>Цвет текста</label>
+            <input type="color" id="dColorText" onchange="updateDesign('colorText', this.value)">
+          </div>
+          <div class="design-row">
+            <label>Баннер — цвет от</label>
+            <input type="color" id="dColorHero1" onchange="updateDesign('colorHero1', this.value)">
+          </div>
+          <div class="design-row">
+            <label>Баннер — цвет до</label>
+            <input type="color" id="dColorHero2" onchange="updateDesign('colorHero2', this.value)">
+          </div>
+        </div>
+
+        <!-- Шрифты -->
+        <div class="design-section">
+          <div class="design-section-title">🔤 Шрифты</div>
+          <div class="form-group">
+            <label>Шрифт заголовков</label>
+            <select class="form-control" id="dFontHeading" onchange="updateDesign('fontHeading', this.value)"></select>
+          </div>
+          <div class="form-group">
+            <label>Шрифт основного текста</label>
+            <select class="form-control" id="dFontBody" onchange="updateDesign('fontBody', this.value)"></select>
+          </div>
+
+          <!-- Размер текста со связанным коэффициентом -->
+          <div style="margin-top:0.6rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
+              <span style="font-size:0.85rem;font-weight:600">Размер текста</span>
+              <button id="dFontLockBtn" class="lock-btn" onclick="toggleFontLock()" title="Связать размеры">🔒</button>
+            </div>
+            <div class="design-row">
+              <label>Основной текст</label>
+              <div class="slider-wrap">
+                <input type="range" id="dFontSizeBase" min="12" max="24" value="16"
+                  oninput="updateDesign('fontSizeBase', this.value)">
+                <span id="dFontSizeBaseVal">16px</span>
+              </div>
+            </div>
+            <div class="design-row" id="dFontRatioRow" style="display:none">
+              <label>Заголовки</label>
+              <div class="slider-wrap">
+                <input type="range" id="dFontRatio" min="1.2" max="3.5" step="0.1" value="1.8"
+                  oninput="updateDesign('fontSizeRatio', this.value)">
+                <span id="dFontRatioVal">заг. 29px</span>
+              </div>
+            </div>
+            <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem" id="dFontRatioHint">
+              Заголовки масштабируются автоматически (×<span id="dRatioNum">1.8</span>)
+            </p>
+          </div>
+        </div>
+
+        <!-- Форма элементов -->
+        <div class="design-section">
+          <div class="design-section-title">⬜ Форма элементов</div>
+          <div class="design-row">
+            <label>Скругление углов</label>
+            <div class="slider-wrap">
+              <input type="range" id="dRadius" min="0" max="48" value="12"
+                oninput="updateDesign('radius', this.value)">
+              <span id="dRadiusVal" style="min-width:110px;font-size:0.75rem">12px — округлые</span>
+            </div>
+          </div>
+          <div class="radius-presets">
+            <button onclick="setRadius(0)"  class="radius-preset">⬛ Острые</button>
+            <button onclick="setRadius(8)"  class="radius-preset">▢ Мягкие</button>
+            <button onclick="setRadius(20)" class="radius-preset">◻ Округлые</button>
+            <button onclick="setRadius(48)" class="radius-preset">⬜ Круглые</button>
+          </div>
+        </div>
+
+        <!-- Позиционирование блоков -->
+        <div class="design-section">
+          <div class="design-section-title">📐 Макет блоков</div>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.8rem">
+            Нажмите 🔓 на блоке в контенте чтобы задать ему раскладку
+          </p>
+          <div class="layout-presets">
+            <div class="layout-preset-item" onclick="setGlobalLayout('stack')">
+              <div class="layout-icon">☰</div>
+              <span>Стопка</span>
+            </div>
+            <div class="layout-preset-item" onclick="setGlobalLayout('wide')">
+              <div class="layout-icon">⬛</div>
+              <span>Широкий</span>
+            </div>
+            <div class="layout-preset-item" onclick="setGlobalLayout('centered')">
+              <div class="layout-icon">⊡</div>
+              <span>По центру</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Декоративные элементы -->
+        <div class="design-section">
+          <div class="design-section-title">✨ Декоративные элементы</div>
+          <div class="decorations-grid" id="decorationsList"></div>
+        </div>
+
       </div>
     </div>
 
@@ -63,8 +190,8 @@
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
         <h3 style="font-size:1rem;font-weight:700">Предпросмотр</h3>
         <div class="flex gap-1">
-          <button class="btn btn-outline btn-sm" onclick="togglePreviewMode('mobile')" id="btnMobile">📱 Мобильный</button>
-          <button class="btn btn-outline btn-sm" onclick="togglePreviewMode('desktop')" id="btnDesktop">🖥 Десктоп</button>
+          <button class="btn btn-outline btn-sm" onclick="togglePreviewMode('mobile')">📱 Моб.</button>
+          <button class="btn btn-outline btn-sm" onclick="togglePreviewMode('desktop')">🖥 ПК</button>
         </div>
       </div>
       <div id="previewWrapper" style="transition:max-width 0.3s;margin:0 auto">
@@ -76,5 +203,6 @@
 </div>
 
 <script src="/js/editor.js"></script>
+<script src="/js/design.js"></script>
 </body>
 </html>

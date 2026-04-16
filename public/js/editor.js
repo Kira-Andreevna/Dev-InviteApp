@@ -3,6 +3,7 @@
 let selectedTemplateId = null;
 let blocks = [];
 let editingSlug = null;
+window.design = {};
 
 const BLOCK_LABELS = {
   hero: '🎉 Заголовок',
@@ -77,6 +78,7 @@ function selectTemplate(id, structure) {
 function startEditor() {
   document.getElementById('stepTemplate').style.display = 'none';
   document.getElementById('stepEditor').style.display = 'block';
+  initDesignPanel(window.design);
   renderBlocksPanel();
   renderPreview();
 }
@@ -94,9 +96,11 @@ async function loadExistingCard(slug) {
     : card.content_json;
 
   blocks = content.blocks || [];
+  window.design = content.design || {};
 
   document.getElementById('stepTemplate').style.display = 'none';
   document.getElementById('stepEditor').style.display = 'block';
+  initDesignPanel(window.design);
   renderBlocksPanel();
   renderPreview();
 }
@@ -108,15 +112,62 @@ function renderBlocksPanel() {
     <div class="editor-block" id="block-${i}">
       <div class="editor-block-header">
         <span class="editor-block-title">${blockTypeLabel(block.type)}</span>
-        <div>
+        <div style="display:flex;align-items:center;gap:2px">
+          <button onclick="toggleBlockLayout(${i})" title="Раскладка блока" class="layout-toggle-btn ${block.layoutLocked ? 'active' : ''}">📐</button>
           ${i > 0 ? `<button onclick="moveBlock(${i}, -1)" title="Вверх">↑</button>` : ''}
           ${i < blocks.length - 1 ? `<button onclick="moveBlock(${i}, 1)" title="Вниз">↓</button>` : ''}
           <button onclick="removeBlock(${i})" title="Удалить">🗑</button>
         </div>
       </div>
+      ${block.layoutLocked ? renderLayoutPanel(block, i) : ''}
       ${renderBlockInput(block, i)}
     </div>
   `).join('');
+}
+
+// Панель раскладки блока
+function renderLayoutPanel(block, i) {
+  const layouts = [
+    { id: 'stack',    icon: '☰',  label: 'Стопка' },
+    { id: 'left',     icon: '◧',  label: 'Текст слева' },
+    { id: 'right',    icon: '◨',  label: 'Текст справа' },
+    { id: 'centered', icon: '⊡',  label: 'По центру' },
+    { id: 'wide',     icon: '⬛', label: 'Во всю ширину' },
+  ];
+  return `
+    <div class="block-layout-panel">
+      <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.4rem">Раскладка блока:</p>
+      <div class="block-layout-btns">
+        ${layouts.map(l => `
+          <button class="block-layout-btn ${block.layout === l.id ? 'active' : ''}"
+            onclick="setBlockLayout(${i}, '${l.id}')" title="${l.label}">
+            ${l.icon}
+          </button>`).join('')}
+      </div>
+      ${(block.type === 'gallery' || block.type === 'video') ? `
+        <div class="design-row" style="margin-top:0.5rem">
+          <label style="font-size:0.8rem">Размер медиа</label>
+          <select class="form-control" style="font-size:0.8rem;padding:0.3rem 0.5rem"
+            onchange="updateBlock(${i}, 'mediaSize', this.value)">
+            <option value="small"  ${block.mediaSize==='small'  ? 'selected':''}>Маленький</option>
+            <option value="medium" ${block.mediaSize==='medium' ? 'selected':''}>Средний</option>
+            <option value="full"   ${block.mediaSize==='full'   ? 'selected':''}>Во всю ширину</option>
+          </select>
+        </div>` : ''}
+    </div>`;
+}
+
+function toggleBlockLayout(i) {
+  blocks[i].layoutLocked = !blocks[i].layoutLocked;
+  if (!blocks[i].layout) blocks[i].layout = 'stack';
+  renderBlocksPanel();
+  renderPreview();
+}
+
+function setBlockLayout(i, layout) {
+  blocks[i].layout = layout;
+  renderBlocksPanel();
+  renderPreview();
 }
 
 function renderBlockInput(block, i) {
@@ -184,9 +235,11 @@ function renderBlockInput(block, i) {
   }
 }
 
+let _blockTimer = null;
 function updateBlock(i, key, value) {
   blocks[i][key] = value;
-  renderPreview();
+  clearTimeout(_blockTimer);
+  _blockTimer = setTimeout(() => renderPreview(), 150);
 }
 
 function moveBlock(i, dir) {
@@ -293,47 +346,79 @@ function removeFile(blockIndex, fileIndex) {
 function renderPreview() {
   const preview = document.getElementById('invitePreview');
   preview.innerHTML = blocks.map(block => renderPreviewBlock(block)).join('');
+  // Применяем только CSS-переменные (без рекурсивного вызова renderPreview)
+  if (typeof applyDesignVars === 'function') applyDesignVars();
+}
+
+function layoutStyle(block) {
+  switch (block.layout) {
+    case 'left':     return 'display:flex;flex-direction:row;align-items:flex-start;gap:1.2rem;';
+    case 'right':    return 'display:flex;flex-direction:row-reverse;align-items:flex-start;gap:1.2rem;';
+    case 'centered': return 'text-align:center;';
+    default:         return '';
+  }
+}
+
+function mediaSizeStyle(block) {
+  switch (block.mediaSize) {
+    case 'small':  return 'max-width:180px;';
+    case 'medium': return 'max-width:340px;';
+    default:       return 'width:100%;';
+  }
 }
 
 function renderPreviewBlock(block) {
+  const d   = window.design || {};
+  const r   = (d.radius ?? 12) + 'px';
+  const fh  = d.fontHeading || 'inherit';
+  const fb  = d.fontBody    || 'inherit';
+  const fs  = (d.fontSizeBase  || 16) + 'px';
+  const fhs = Math.round((d.fontSizeBase || 16) * (d.fontSizeRatio || 1.8)) + 'px';
+  const tc  = d.colorText    || 'inherit';
+  const pc  = d.colorPrimary || 'var(--primary)';
+  const h1  = d.colorHero1   || 'var(--primary)';
+  const h2  = d.colorHero2   || 'var(--accent)';
+  const ls  = layoutStyle(block);
+  const ms  = mediaSizeStyle(block);
+
   switch (block.type) {
     case 'hero':
-      return `<div class="preview-hero">
-        <h1>${escHtml(block.value || 'Заголовок мероприятия')}</h1>
-        ${block.subtitle ? `<p>${escHtml(block.subtitle)}</p>` : ''}
+      return `<div class="preview-hero" style="background:linear-gradient(135deg,${h1},${h2});border-radius:${r} ${r} 0 0">
+        <h1 style="font-family:${fh};font-size:${fhs}">${escHtml(block.value || 'Заголовок мероприятия')}</h1>
+        ${block.subtitle ? `<p style="font-family:${fb};font-size:${fs}">${escHtml(block.subtitle)}</p>` : ''}
       </div>`;
 
     case 'story':
-      return `<div class="preview-block">
-        <h2>📖 Наша история</h2>
-        <p>${escHtml(block.value || '')}</p>
+      return `<div class="preview-block" style="${ls}border-radius:${r}">
+        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">📖 Наша история</h2>
+        <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'details':
-      return `<div class="preview-block">
-        <h2>📌 Важные детали</h2>
-        <p>${escHtml(block.value || '')}</p>
+      return `<div class="preview-block" style="${ls}border-radius:${r}">
+        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">📌 Важные детали</h2>
+        <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'wishes':
-      return `<div class="preview-block">
-        <h2>💌 Пожелания</h2>
-        <p>${escHtml(block.value || '')}</p>
+      return `<div class="preview-block" style="${ls}border-radius:${r}">
+        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">💌 Пожелания</h2>
+        <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'date':
-      return `<div class="preview-date">
+      return `<div class="preview-date" style="border-radius:${r}">
         <div class="preview-date-icon">📅</div>
         <div class="preview-date-text">
-          <h2>Дата и место</h2>
-          <p>${block.value ? formatDate(block.value) : 'Дата не указана'}${block.time ? ' в ' + block.time : ''}</p>
-          ${block.place ? `<p style="color:var(--text-muted);font-size:0.9rem">📍 ${escHtml(block.place)}</p>` : ''}
+          <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">Дата и место</h2>
+          <p style="font-family:${fb};font-size:${fs};color:${tc}">${block.value ? formatDate(block.value) : 'Дата не указана'}${block.time ? ' в ' + block.time : ''}</p>
+          ${block.place ? `<p style="color:var(--text-muted);font-size:0.9rem;font-family:${fb}">📍 ${escHtml(block.place)}</p>` : ''}
         </div>
       </div>`;
 
     case 'palette':
-      return `<div class="preview-palette">
-        <h2>🎨 Цветовая палитра</h2>
+      return `<div class="preview-palette" style="border-radius:${r}">
+        <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🎨 Цветовая палитра</h2>
         <div class="color-palette">
           ${(block.colors || []).map(c => `<div class="color-swatch" style="background:${c}" title="${c}"></div>`).join('')}
         </div>
@@ -341,22 +426,25 @@ function renderPreviewBlock(block) {
 
     case 'gallery':
       if (!block.files || !block.files.length) return '';
-      return `<div class="preview-gallery">
-        <h2>📁 Медиа</h2>
-        <div class="gallery-grid">
-          ${block.files.map(f => `<img src="${f}" alt="фото">`).join('')}
-        </div>
+      return `<div class="preview-gallery" style="${ls}border-radius:${r}">
+        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🖼 Фотогалерея</h2>
+        <div class="gallery-grid" style="${ms}border-radius:${r}">
+          ${block.files.map(f => `<img src="${f}" alt="фото" style="border-radius:${r}">`).join('')}
+        </div></div>
       </div>`;
 
-    case 'video':
+    case 'video': {
       if (!block.value) return '';
       const isYT = block.value.includes('youtube') || block.value.includes('youtu.be');
-      return `<div class="preview-block">
-        <h2>🎬 Видео</h2>
-        ${isYT
-          ? `<iframe width="100%" height="250" src="${ytEmbed(block.value)}" frameborder="0" allowfullscreen style="border-radius:8px"></iframe>`
-          : `<video src="${block.value}" controls style="width:100%;border-radius:8px"></video>`}
+      return `<div class="preview-block" style="${ls}border-radius:${r}">
+        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🎬 Видео</h2>
+        <div style="${ms}">
+          ${isYT
+            ? `<iframe width="100%" height="220" src="${ytEmbed(block.value)}" frameborder="0" allowfullscreen style="border-radius:${r}"></iframe>`
+            : `<video src="${block.value}" controls style="width:100%;border-radius:${r}"></video>`}
+        </div></div>
       </div>`;
+    }
 
     default:
       return '';
@@ -377,7 +465,7 @@ async function saveCard() {
   btn.textContent = 'Сохранение...';
   btn.disabled = true;
 
-  const body = { title, template_id: selectedTemplateId, content_json: { blocks } };
+  const body = { title, template_id: selectedTemplateId, content_json: { blocks, design: window.design } };
 
   try {
     let res;

@@ -1,4 +1,18 @@
 /* ===== Стили страницы приглашения ===== */
+
+/* CSS-переменные дизайна (переопределяются через JS) */
+:root {
+  --inv-primary: #7c5cbf;
+  --inv-bg:      #ffffff;
+  --inv-text:    #2d2d2d;
+  --inv-hero1:   #7c5cbf;
+  --inv-hero2:   #f4a261;
+  --inv-font-h:  'Segoe UI', sans-serif;
+  --inv-font-b:  'Segoe UI', sans-serif;
+  --inv-fsize:   16px;
+  --inv-radius:  12px;
+}
+
 .invite-page {
   max-width: 720px;
   margin: 0 auto;
@@ -7,19 +21,21 @@
 
 /* Блоки контента */
 .inv-hero {
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: linear-gradient(135deg, var(--inv-hero1), var(--inv-hero2));
   color: white;
   padding: 4rem 2rem;
   text-align: center;
   margin-bottom: 0;
 }
 .inv-hero h1 {
+  font-family: var(--inv-font-h);
   font-size: 2.4rem;
   font-weight: 800;
   margin-bottom: 0.6rem;
   text-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 .inv-hero p {
+  font-family: var(--inv-font-b);
   font-size: 1.1rem;
   opacity: 0.92;
 }
@@ -27,18 +43,23 @@
 .inv-block {
   padding: 2rem 1.5rem;
   border-bottom: 1px solid var(--border);
+  background: var(--inv-bg);
+  border-radius: var(--inv-radius);
 }
 .inv-block:last-child { border-bottom: none; }
 .inv-block h2 {
+  font-family: var(--inv-font-h);
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--primary);
+  color: var(--inv-primary);
   margin-bottom: 0.8rem;
 }
 .inv-block p {
+  font-family: var(--inv-font-b);
+  font-size: var(--inv-fsize);
   white-space: pre-wrap;
   line-height: 1.7;
-  color: var(--text);
+  color: var(--inv-text);
 }
 
 .inv-date {
@@ -47,24 +68,57 @@
   gap: 1.5rem;
   padding: 2rem 1.5rem;
   border-bottom: 1px solid var(--border);
-  background: var(--bg);
+  background: var(--inv-bg);
+  border-radius: var(--inv-radius);
 }
 .inv-date-icon { font-size: 3rem; }
-.inv-date-info h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 0.3rem; }
-.inv-date-info .date-val { font-size: 1.3rem; font-weight: 700; }
-.inv-date-info .place-val { color: var(--text-muted); font-size: 0.95rem; margin-top: 0.2rem; }
+.inv-date-info h2 {
+  font-family: var(--inv-font-h);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--inv-primary);
+  margin-bottom: 0.3rem;
+}
+.inv-date-info .date-val {
+  font-family: var(--inv-font-b);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--inv-text);
+}
+.inv-date-info .place-val {
+  font-family: var(--inv-font-b);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: 0.2rem;
+}
 
 .inv-palette {
   padding: 2rem 1.5rem;
   border-bottom: 1px solid var(--border);
+  background: var(--inv-bg);
+  border-radius: var(--inv-radius);
 }
-.inv-palette h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 0.8rem; }
+.inv-palette h2 {
+  font-family: var(--inv-font-h);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--inv-primary);
+  margin-bottom: 0.8rem;
+}
 
 .inv-gallery {
   padding: 2rem 1.5rem;
   border-bottom: 1px solid var(--border);
+  background: var(--inv-bg);
+  border-radius: var(--inv-radius);
 }
-.inv-gallery h2 { font-size: 1.15rem; font-weight: 700; color: var(--primary); margin-bottom: 0.8rem; }
+.inv-gallery h2 {
+  font-family: var(--inv-font-h);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--inv-primary);
+  margin-bottom: 0.8rem;
+}
 .inv-gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
