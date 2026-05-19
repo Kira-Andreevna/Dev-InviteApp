@@ -1,16 +1,18 @@
 /* ===== Стили страницы приглашения ===== */
 
-/* CSS-переменные дизайна (переопределяются через JS) */
 :root {
-  --inv-primary: #7c5cbf;
-  --inv-bg:      #ffffff;
-  --inv-text:    #2d2d2d;
-  --inv-hero1:   #7c5cbf;
-  --inv-hero2:   #f4a261;
-  --inv-font-h:  'Segoe UI', sans-serif;
-  --inv-font-b:  'Segoe UI', sans-serif;
-  --inv-fsize:   16px;
-  --inv-radius:  12px;
+  --inv-primary:    #7c5cbf;
+  --inv-bg:         #ffffff;
+  --inv-block-bg:   #ffffff;
+  --inv-text:       #2d2d2d;
+  --inv-hero1:      #7c5cbf;
+  --inv-hero2:      #f4a261;
+  --inv-font-h:     'Segoe UI', sans-serif;
+  --inv-font-b:     'Segoe UI', sans-serif;
+  --inv-fsize:      16px;
+  --inv-radius:     12px;
+  --inv-block-gap:  16px;
+  --inv-shadow-clr: 0,0,0;
 }
 
 .invite-page {
@@ -19,37 +21,103 @@
   padding: 0 1rem 4rem;
 }
 
-/* Блоки контента */
+/* ===== Hero блок ===== */
 .inv-hero {
-  background: linear-gradient(135deg, var(--inv-hero1), var(--inv-hero2));
+  position: relative;
   color: white;
-  padding: 4rem 2rem;
+  padding: 5rem 2.5rem 4rem;
   text-align: center;
+  overflow: hidden;
   margin-bottom: 0;
 }
+
+/* Градиент (default) */
+.inv-hero--gradient {
+  background: linear-gradient(135deg, var(--inv-hero1), var(--inv-hero2));
+}
+
+/* Сплошной */
+.inv-hero--solid {
+  background: var(--inv-hero1);
+}
+
+/* Волна */
+.inv-hero--wave {
+  background: linear-gradient(160deg, var(--inv-hero1) 0%, var(--inv-hero2) 100%);
+  padding-bottom: 6rem;
+}
+.inv-hero--wave .inv-hero-wave {
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background: var(--inv-bg);
+  clip-path: ellipse(55% 100% at 50% 100%);
+}
+
+/* Диагональ */
+.inv-hero--diagonal {
+  background: linear-gradient(135deg, var(--inv-hero1) 50%, var(--inv-hero2) 50%);
+}
+
+/* Стекло */
+.inv-hero--glass {
+  background: linear-gradient(135deg, var(--inv-hero1)cc, var(--inv-hero2)99);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* Тёмный */
+.inv-hero--dark {
+  background: linear-gradient(135deg, #0d0d0d, #1a1a2e);
+}
+
 .inv-hero h1 {
   font-family: var(--inv-font-h);
-  font-size: 2.4rem;
+  font-size: clamp(1.8rem, 5vw, 3rem);
   font-weight: 800;
-  margin-bottom: 0.6rem;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  margin-bottom: 0.8rem;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  line-height: 1.2;
+  position: relative;
+  z-index: 1;
 }
 .inv-hero p {
   font-family: var(--inv-font-b);
   font-size: 1.1rem;
   opacity: 0.92;
+  position: relative;
+  z-index: 1;
 }
 
-.inv-block {
-  padding: 2rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--inv-bg);
-  border-radius: var(--inv-radius);
+/* Блестящая полоска поверх hero */
+.inv-hero::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+  animation: heroShine 4s ease-in-out infinite;
+  pointer-events: none;
 }
-.inv-block:last-child { border-bottom: none; }
+@keyframes heroShine {
+  0%   { left: -100%; }
+  50%  { left: 150%; }
+  100% { left: 150%; }
+}
+
+/* ===== Блоки контента ===== */
+.inv-block {
+  padding: 2rem 1.8rem;
+  background: var(--inv-block-bg);
+  border-radius: var(--inv-radius);
+  margin-bottom: var(--inv-block-gap, 16px);
+}
 .inv-block h2 {
   font-family: var(--inv-font-h);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--inv-primary);
   margin-bottom: 0.8rem;
@@ -58,63 +126,71 @@
   font-family: var(--inv-font-b);
   font-size: var(--inv-fsize);
   white-space: pre-wrap;
-  line-height: 1.7;
+  line-height: 1.8;
   color: var(--inv-text);
 }
 
+/* ===== Тени блоков ===== */
+.inv-shadow--none   { box-shadow: none; }
+.inv-shadow--soft   { box-shadow: 0 4px 24px rgba(var(--inv-shadow-clr), 0.10); }
+.inv-shadow--lifted { box-shadow: 0 8px 40px rgba(var(--inv-shadow-clr), 0.18), 0 2px 8px rgba(var(--inv-shadow-clr), 0.06); }
+.inv-shadow--glow   { box-shadow: 0 0 32px rgba(var(--inv-shadow-clr), 0.45), 0 4px 20px rgba(var(--inv-shadow-clr), 0.12); }
+
+/* ===== Дата ===== */
 .inv-date {
   display: flex;
   align-items: center;
   gap: 1.5rem;
-  padding: 2rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--inv-bg);
+  padding: 2rem 1.8rem;
+  background: var(--inv-block-bg);
   border-radius: var(--inv-radius);
+  margin-bottom: var(--inv-block-gap, 16px);
 }
-.inv-date-icon { font-size: 3rem; }
+.inv-date-icon { font-size: 3rem; flex-shrink: 0; }
 .inv-date-info h2 {
   font-family: var(--inv-font-h);
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--inv-primary);
   margin-bottom: 0.3rem;
 }
 .inv-date-info .date-val {
   font-family: var(--inv-font-b);
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--inv-text);
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
-.inv-date-info .place-val {
-  font-family: var(--inv-font-b);
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  margin-top: 0.2rem;
-}
+.inv-date-info .date-val:last-child { margin-bottom: 0; }
 
+/* ===== Палитра ===== */
 .inv-palette {
-  padding: 2rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--inv-bg);
+  padding: 2rem 1.8rem;
+  background: var(--inv-block-bg);
   border-radius: var(--inv-radius);
+  margin-bottom: var(--inv-block-gap, 16px);
 }
 .inv-palette h2 {
   font-family: var(--inv-font-h);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--inv-primary);
   margin-bottom: 0.8rem;
 }
 
+/* ===== Галерея ===== */
 .inv-gallery {
-  padding: 2rem 1.5rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--inv-bg);
+  padding: 2rem 1.8rem;
+  background: var(--inv-block-bg);
   border-radius: var(--inv-radius);
+  margin-bottom: var(--inv-block-gap, 16px);
 }
 .inv-gallery h2 {
   font-family: var(--inv-font-h);
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--inv-primary);
   margin-bottom: 0.8rem;
@@ -122,31 +198,93 @@
 .inv-gallery-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.5rem;
+  gap: 0.6rem;
 }
 .inv-gallery-grid img {
   width: 100%;
   aspect-ratio: 1;
   object-fit: cover;
-  border-radius: 8px;
+  border-radius: calc(var(--inv-radius) * 0.6);
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.25s, box-shadow 0.25s;
 }
-.inv-gallery-grid img:hover { transform: scale(1.03); }
-
-@media (max-width: 480px) {
-  .inv-hero h1 { font-size: 1.8rem; }
-  .inv-gallery-grid { grid-template-columns: repeat(2, 1fr); }
-  .inv-date { flex-direction: column; text-align: center; }
+.inv-gallery-grid img:hover {
+  transform: scale(1.04);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.18);
 }
 
-/* Лайтбокс */
+/* ===== Разделители ===== */
+.inv-divider {
+  text-align: center;
+  margin: 0.4rem 1.5rem;
+  opacity: 0.6;
+}
+.inv-divider--line {
+  height: 1px;
+  margin: 0.6rem 2rem;
+}
+.inv-divider--dots,
+.inv-divider--diamond,
+.inv-divider--floral {
+  font-size: 0.75rem;
+  letter-spacing: 6px;
+  padding: 0.2rem 0;
+}
+.inv-divider--wave {
+  font-size: 1rem;
+  letter-spacing: 2px;
+  padding: 0.1rem 0;
+}
+
+/* ===== Анимации появления ===== */
+.inv-animate {
+  opacity: 0;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+/* fade */
+.inv-anim--fade { opacity: 0; }
+.inv-anim--fade.inv-anim--visible { opacity: 1; }
+
+/* slide */
+.inv-anim--slide { opacity: 0; transform: translateY(32px); }
+.inv-anim--slide.inv-anim--visible { opacity: 1; transform: translateY(0); }
+
+/* zoom */
+.inv-anim--zoom { opacity: 0; transform: scale(0.92); }
+.inv-anim--zoom.inv-anim--visible { opacity: 1; transform: scale(1); }
+
+/* flip */
+.inv-anim--flip { opacity: 0; transform: rotateX(12deg) translateY(20px); transform-origin: top; }
+.inv-anim--flip.inv-anim--visible { opacity: 1; transform: rotateX(0) translateY(0); }
+
+/* Hero всегда видим */
+.inv-hero.inv-animate {
+  opacity: 1;
+  transform: none;
+}
+
+/* ===== Лайтбокс ===== */
 .lightbox {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,0.9);
+  background: rgba(0,0,0,0.92);
   display: flex; align-items: center; justify-content: center;
   z-index: 1000;
   cursor: pointer;
+  backdrop-filter: blur(4px);
 }
 .lightbox.hidden { display: none; }
-.lightbox img { max-width: 90vw; max-height: 90vh; border-radius: 8px; }
+.lightbox img {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 12px;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+}
+
+/* ===== Адаптив ===== */
+@media (max-width: 480px) {
+  .inv-hero h1 { font-size: 1.7rem; }
+  .inv-gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .inv-date { flex-direction: column; text-align: center; }
+  .inv-block, .inv-date, .inv-palette, .inv-gallery { padding: 1.4rem 1.2rem; }
+}

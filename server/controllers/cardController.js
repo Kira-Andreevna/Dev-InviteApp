@@ -84,11 +84,27 @@ async function updateCard(req, res) {
     );
     if (rows.length === 0) return res.status(404).json({ error: 'Не найдено' });
 
+    const cardId = rows[0].id;
+
+    // Определяем следующий номер версии
+    const [[{ maxVersion }]] = await db.query(
+      'SELECT COALESCE(MAX(version), 0) AS maxVersion FROM card_versions WHERE card_id = ?',
+      [cardId]
+    );
+
+    // Сохраняем новую версию
+    await db.query(
+      'INSERT INTO card_versions (card_id, version, title, content_json) VALUES (?, ?, ?, ?)',
+      [cardId, maxVersion + 1, title, JSON.stringify(content_json)]
+    );
+
+    // Обновляем текущую открытку
     await db.query(
       'UPDATE cards SET title = ?, content_json = ?, is_published = ? WHERE slug = ?',
       [title, JSON.stringify(content_json), is_published ?? 1, req.params.slug]
     );
-    res.json({ success: true });
+
+    res.json({ success: true, version: maxVersion + 1 });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Ошибка сервера' });

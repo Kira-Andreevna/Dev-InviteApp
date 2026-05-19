@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Управление гостями — InviteCard</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/rsvp.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="/">✉️ <span>InviteCard</span></a>
+  <div class="navbar-nav">
+    <a href="/dashboard" class="btn btn-outline btn-sm">← Мои открытки</a>
+  </div>
+</nav>
+
+<div class="container" style="padding-top:2rem;padding-bottom:4rem">
+
+  <div id="loadingState" class="text-center" style="padding:3rem"><div class="spinner"></div></div>
+
+  <div id="mainContent" style="display:none">
+
+    <div class="flex items-center justify-between mb-2" style="flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1 id="cardTitleEl" style="font-size:1.5rem;font-weight:700"></h1>
+        <p id="cardDateEl" class="text-muted" style="font-size:0.9rem"></p>
+      </div>
+      <div class="flex gap-1">
+        <a id="inviteLink" href="#" target="_blank" class="btn btn-outline btn-sm">🔗 Открыть</a>
+        <button class="btn btn-primary btn-sm" onclick="openTab('share')">📤 Поделиться</button>
+      </div>
+    </div>
+
+    <!-- Вкладки -->
+    <div class="rsvp-tabs">
+      <button class="rsvp-tab active" onclick="openTab('guests')">👥 Гости</button>
+      <button class="rsvp-tab" onclick="openTab('send')">📨 Рассылка</button>
+      <button class="rsvp-tab" onclick="openTab('notify')">🔔 Уведомления</button>
+      <button class="rsvp-tab" onclick="openTab('share')">📤 Поделиться</button>
+      <button class="rsvp-tab" onclick="openTab('log')">📋 Лог</button>
+    </div>
+
+    <!-- ===== Вкладка: Гости ===== -->
+    <div id="tab-guests" class="rsvp-panel">
+      <div class="stats-grid" id="statsGrid"></div>
+
+      <!-- Фильтры -->
+      <div class="flex gap-1 mb-2" style="flex-wrap:wrap">
+        <button class="filter-btn active" onclick="filterGuests('all')">Все</button>
+        <button class="filter-btn" onclick="filterGuests('yes')">✅ Придут</button>
+        <button class="filter-btn" onclick="filterGuests('no')">❌ Не придут</button>
+        <button class="filter-btn" onclick="filterGuests('maybe')">🤔 Не знают</button>
+        <button class="filter-btn" onclick="filterGuests('minor')">👶 Дети</button>
+      </div>
+
+      <div id="guestsTableWrap"></div>
+    </div>
+
+    <!-- ===== Вкладка: Рассылка ===== -->
+    <div id="tab-send" class="rsvp-panel" style="display:none">
+      <div class="card">
+        <h3 style="margin-bottom:1rem">📨 Массовая рассылка приглашений</h3>
+        <p class="text-muted" style="font-size:0.9rem;margin-bottom:1.2rem">
+          Введите список гостей (имя и email). Каждый получит письмо со ссылкой на приглашение.
+        </p>
+
+        <div class="form-group">
+          <label>Список гостей (по одному на строку: Имя, email)</label>
+          <textarea id="bulkGuestList" class="form-control" rows="8"
+            placeholder="Иван Иванов, ivan@example.com&#10;Мария Петрова, maria@example.com"></textarea>
+        </div>
+
+        <div id="bulkAlert"></div>
+        <button class="btn btn-primary" onclick="sendBulkInvites()">Отправить приглашения</button>
+
+        <div id="bulkResults" style="margin-top:1.5rem"></div>
+      </div>
+    </div>
+
+    <!-- ===== Вкладка: Уведомления ===== -->
+    <div id="tab-notify" class="rsvp-panel" style="display:none">
+      <div class="card">
+        <h3 style="margin-bottom:1rem">🔔 Настройки уведомлений</h3>
+
+        <div class="form-group">
+          <label>Дата мероприятия</label>
+          <input type="date" id="nEventDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label>Email для уведомлений об ответах гостей</label>
+          <input type="email" id="nEmail" class="form-control" placeholder="your@email.com">
+        </div>
+        <div class="form-group">
+          <label>Telegram Chat ID для уведомлений</label>
+          <input type="text" id="nTgChatId" class="form-control" placeholder="123456789">
+          <p class="text-muted" style="font-size:0.8rem;margin-top:0.3rem">
+            Узнать свой Chat ID: напишите боту <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a>
+          </p>
+        </div>
+        <div class="form-group">
+          <label>Напоминание гостям за сколько дней до мероприятия</label>
+          <select id="nReminderDays" class="form-control">
+            <option value="1">За 1 день</option>
+            <option value="2">За 2 дня</option>
+            <option value="3" selected>За 3 дня</option>
+            <option value="5">За 5 дней</option>
+            <option value="7">За 7 дней</option>
+            <option value="0">Не отправлять</option>
+          </select>
+        </div>
+
+        <div id="notifyAlert"></div>
+        <button class="btn btn-primary" onclick="saveNotifySettings()">Сохранить настройки</button>
+      </div>
+    </div>
+
+    <!-- ===== Вкладка: Поделиться ===== -->
+    <div id="tab-share" class="rsvp-panel" style="display:none">
+      <div class="card">
+        <h3 style="margin-bottom:1rem">📤 Поделиться приглашением</h3>
+
+        <div class="share-url-box">
+          <input type="text" id="shareUrlInput" class="form-control" readonly>
+          <button class="btn btn-primary" onclick="copyShareUrl()">Копировать</button>
+        </div>
+
+        <div class="qr-container mt-2">
+          <img id="qrImg" src="" alt="QR-код">
+          <a id="qrDownload" class="btn btn-outline btn-sm mt-1" download="qr.png">Скачать QR</a>
+        </div>
+
+        <h4 style="margin:1.5rem 0 0.8rem">Отправить через:</h4>
+        <div class="share-buttons" id="shareButtons"></div>
+      </div>
+    </div>
+
+    <!-- ===== Вкладка: Лог ===== -->
+    <div id="tab-log" class="rsvp-panel" style="display:none">
+      <div id="notifLog"><div class="spinner"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<script src="/js/rsvp.js"></script>
+</body>
+</html>

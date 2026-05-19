@@ -11,10 +11,10 @@
 <body>
 
 <nav class="navbar">
-  <a class="navbar-brand" href="/">✉️ <span>InviteCard</span></a>
+  <a class="navbar-brand" href="/">💌 <span>InviteCard</span></a>
   <div class="navbar-nav">
-    <button class="btn btn-outline btn-sm" onclick="history.back()">← Назад</button>
-    <button class="btn btn-primary btn-sm" onclick="saveCard()" id="saveBtn">Сохранить</button>
+    <button class="btn btn-outline btn-sm" onclick="history.back()">❌ Закрыть</button>
+    <button class="btn btn-primary btn-sm" onclick="saveCard()" id="saveBtn">📥 Сохранить</button>
   </div>
 </nav>
 
@@ -50,13 +50,13 @@
 
         <div id="blocksPanel"></div>
 
-        <button class="btn btn-outline w-full mt-2" onclick="toggleBlockPicker()">+ Добавить блок</button>
+        <button class="btn btn-outline w-full mt-2" onclick="toggleBlockPicker()">➕ Добавить блок</button>
 
         <div id="blockTypePicker" style="display:none;margin-top:1rem;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:1rem">
           <p style="font-size:0.85rem;font-weight:600;margin-bottom:0.8rem;color:var(--text-muted)">Выберите тип блока:</p>
-          <p class="picker-section-label">📝 Текстовые</p>
+          <p class="picker-section-label">🗒️ Текстовые</p>
           <div id="textBlockBtns" style="display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem"></div>
-          <p class="picker-section-label">🖼 Медиа</p>
+          <p class="picker-section-label">🎞️ Медиа</p>
           <div id="mediaBlockBtns" style="display:flex;flex-direction:column;gap:0.4rem"></div>
         </div>
       </div>
@@ -66,13 +66,13 @@
 
         <!-- Темы -->
         <div class="design-section">
-          <div class="design-section-title">🎭 Тема оформления</div>
+          <div class="design-section-title">Тема оформления</div>
           <div id="themesList" class="themes-grid"></div>
         </div>
 
         <!-- Цвета -->
         <div class="design-section">
-          <div class="design-section-title">🎨 Цветовая гамма</div>
+          <div class="design-section-title">Цветовая гамма</div>
           <div class="design-row">
             <label>Основной цвет</label>
             <input type="color" id="dColorPrimary" onchange="updateDesign('colorPrimary', this.value)">
@@ -80,6 +80,10 @@
           <div class="design-row">
             <label>Фон страницы</label>
             <input type="color" id="dColorBg" onchange="updateDesign('colorBg', this.value)">
+          </div>
+          <div class="design-row">
+            <label>Фон блоков</label>
+            <input type="color" id="dColorBlock" onchange="updateDesign('colorBlock', this.value)">
           </div>
           <div class="design-row">
             <label>Цвет текста</label>
@@ -97,7 +101,7 @@
 
         <!-- Шрифты -->
         <div class="design-section">
-          <div class="design-section-title">🔤 Шрифты</div>
+          <div class="design-section-title">Шрифты</div>
           <div class="form-group">
             <label>Шрифт заголовков</label>
             <select class="form-control" id="dFontHeading" onchange="updateDesign('fontHeading', this.value)"></select>
@@ -137,7 +141,7 @@
 
         <!-- Форма элементов -->
         <div class="design-section">
-          <div class="design-section-title">⬜ Форма элементов</div>
+          <div class="design-section-title">Форма элементов</div>
           <div class="design-row">
             <label>Скругление углов</label>
             <div class="slider-wrap">
@@ -147,16 +151,24 @@
             </div>
           </div>
           <div class="radius-presets">
-            <button onclick="setRadius(0)"  class="radius-preset">⬛ Острые</button>
-            <button onclick="setRadius(8)"  class="radius-preset">▢ Мягкие</button>
-            <button onclick="setRadius(20)" class="radius-preset">◻ Округлые</button>
-            <button onclick="setRadius(48)" class="radius-preset">⬜ Круглые</button>
+            <button onclick="setRadius(0)"  class="radius-preset">Острые</button>
+            <button onclick="setRadius(8)"  class="radius-preset">Мягкие</button>
+            <button onclick="setRadius(20)" class="radius-preset">Округлые</button>
+            <button onclick="setRadius(48)" class="radius-preset">Круглые</button>
+          </div>
+          <div class="design-row" style="margin-top:0.8rem">
+            <label>Отступ между блоками</label>
+            <div class="slider-wrap">
+              <input type="range" id="dBlockGap" min="0" max="64" value="16"
+                oninput="updateDesign('blockGap', this.value)">
+              <span id="dBlockGapVal" style="min-width:36px;font-size:0.75rem">16px</span>
+            </div>
           </div>
         </div>
 
         <!-- Позиционирование блоков -->
         <div class="design-section">
-          <div class="design-section-title">📐 Макет блоков</div>
+          <div class="design-section-title">Макет блоков</div>
           <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.8rem">
             Нажмите 🔓 на блоке в контенте чтобы задать ему раскладку
           </p>
@@ -178,8 +190,43 @@
 
         <!-- Декоративные элементы -->
         <div class="design-section">
-          <div class="design-section-title">✨ Декоративные элементы</div>
+          <div class="design-section-title">Декоративные элементы</div>
           <div class="decorations-grid" id="decorationsList"></div>
+        </div>
+
+        <!-- Фоновый паттерн -->
+        <div class="design-section">
+          <div class="design-section-title">Фон страницы</div>
+          <div class="style-chips-grid" id="bgPatternsList"></div>
+        </div>
+
+        <!-- Стиль Hero -->
+        <div class="design-section">
+          <div class="design-section-title">Стиль баннера</div>
+          <div class="style-chips-grid" id="heroStylesList"></div>
+        </div>
+
+        <!-- Разделители -->
+        <div class="design-section">
+          <div class="design-section-title">Разделители блоков</div>
+          <div class="style-chips-grid" id="dividerStylesList"></div>
+        </div>
+
+        <!-- Тени блоков -->
+        <div class="design-section">
+          <div class="design-section-title">Тени блоков</div>
+          <div class="style-chips-grid" id="blockShadowsList"></div>
+          <div class="design-row" id="dShadowColorRow" style="margin-top:0.7rem;display:none">
+            <label>Цвет тени / свечения</label>
+            <input type="color" id="dShadowColor" value="#000000" onchange="updateDesign('shadowColor', this.value)">
+          </div>
+        </div>
+
+        <!-- Анимации -->
+        <div class="design-section">
+          <div class="design-section-title">Анимация появления</div>
+          <p style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.6rem">Применяется на странице приглашения</p>
+          <div class="style-chips-grid" id="animationsList"></div>
         </div>
 
       </div>
@@ -191,7 +238,7 @@
         <h3 style="font-size:1rem;font-weight:700">Предпросмотр</h3>
         <div class="flex gap-1">
           <button class="btn btn-outline btn-sm" onclick="togglePreviewMode('mobile')">📱 Моб.</button>
-          <button class="btn btn-outline btn-sm" onclick="togglePreviewMode('desktop')">🖥 ПК</button>
+          <button class="btn btn-outline btn-sm" onclick="togglePreviewMode('desktop')">💻 ПК</button>
         </div>
       </div>
       <div id="previewWrapper" style="transition:max-width 0.3s;margin:0 auto">
@@ -202,7 +249,7 @@
   </div>
 </div>
 
-<script src="/js/editor.js"></script>
 <script src="/js/design.js"></script>
+<script src="/js/editor.js"></script>
 </body>
 </html>

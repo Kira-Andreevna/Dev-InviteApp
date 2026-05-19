@@ -3,99 +3,176 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>InviteCard — создание пригласительных открыток</title>
+  <title>InviteCard — цифровые пригласительные с душой</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/landing.css">
 </head>
 <body>
 
 <nav class="navbar">
   <a class="navbar-brand" href="/">
-    ✉️ <span>InviteCard</span>
+    <span class="brand-icon">💌</span>
+    <span class="brand-name">InviteCard</span>
   </a>
   <div class="navbar-nav" id="navLinks">
-    <a href="/login.html">Войти</a>
-    <a href="/register.html" class="btn btn-primary btn-sm">Регистрация</a>
+    <a href="/login.html" class="nav-link">Войти</a>
+    <a href="/register.html" class="btn btn-primary btn-sm">Начать бесплатно</a>
   </div>
 </nav>
 
-<section class="hero">
-  <h1>Создайте пригласительную открытку онлайн</h1>
-  <p>Делитесь приглашениями через ссылку или QR-код. Никакой печати — только удобство.</p>
-  <div class="hero-actions">
-    <a href="/editor" class="btn btn-primary">Создать открытку</a>
-    <a href="#how" class="btn btn-outline">Как это работает</a>
+<!-- Hero -->
+<section class="landing-hero">
+  <div class="hero-bg-decor">
+    <span class="decor-circle c1"></span>
+    <span class="decor-circle c2"></span>
+    <span class="decor-circle c3"></span>
+  </div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">✨ Цифровые пригласительные</p>
+    <h1 class="hero-title">Создайте открытку,<br>которую запомнят</h1>
+    <p class="hero-subtitle">Красивые приглашения на свадьбу, день рождения и любой праздник — без дизайнера и типографии. Просто ссылка.</p>
+    <div class="hero-actions">
+      <a href="/register.html" class="btn btn-hero-primary">Создать открытку</a>
+      <a href="#how" class="btn btn-hero-outline">Как это работает</a>
+    </div>
+    <p class="hero-note">Бесплатно · Без установки · Готово за 5 минут</p>
+  </div>
+  <div class="hero-visual">
+    <div class="card-mockup">
+      <div class="mockup-inner">
+        <div class="mockup-tag">💍 Свадьба</div>
+        <div class="mockup-title">Анна & Михаил</div>
+        <div class="mockup-date">14 июня 2025</div>
+        <div class="mockup-divider"></div>
+        <div class="mockup-text">Мы приглашаем вас разделить с нами этот особенный день</div>
+        <div class="mockup-btn">Подтвердить участие →</div>
+      </div>
+    </div>
   </div>
 </section>
 
-<section class="section" id="how">
+<!-- Как это работает -->
+<section class="landing-section" id="how">
   <div class="container">
-    <h2 class="section-title text-center">Как это работает</h2>
-    <div class="grid-3">
-      <div class="card text-center">
-        <div style="font-size:2.5rem;margin-bottom:0.8rem">🎨</div>
-        <h3>1. Создайте открытку</h3>
-        <p class="text-muted mt-1">Выберите шаблон или создайте с нуля. Добавьте фото, видео, детали мероприятия.</p>
+    <p class="section-eyebrow">Просто и быстро</p>
+    <h2 class="landing-section-title">Три шага до готового приглашения</h2>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <div class="step-icon">🎨</div>
+        <h3>Оформите открытку</h3>
+        <p>Выберите шаблон или соберите с нуля. Добавьте фото, видео, детали мероприятия и цветовую палитру.</p>
       </div>
-      <div class="card text-center">
-        <div style="font-size:2.5rem;margin-bottom:0.8rem">🔗</div>
-        <h3>2. Поделитесь ссылкой</h3>
-        <p class="text-muted mt-1">Получите уникальную ссылку и QR-код. Отправьте гостям любым удобным способом.</p>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <div class="step-icon">🔗</div>
+        <h3>Поделитесь ссылкой</h3>
+        <p>Получите уникальную ссылку и QR-код. Отправьте в мессенджер, по почте или распечатайте на конверте.</p>
       </div>
-      <div class="card text-center">
-        <div style="font-size:2.5rem;margin-bottom:0.8rem">📋</div>
-        <h3>3. Отслеживайте гостей</h3>
-        <p class="text-muted mt-1">Гости заполняют анкету прямо на странице приглашения. Вы видите всё в личном кабинете.</p>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <div class="step-icon">📋</div>
+        <h3>Следите за гостями</h3>
+        <p>Гости подтверждают участие прямо на странице. Вы видите статистику и получаете уведомления.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section class="section" style="background: var(--surface); border-top: 1px solid var(--border);">
+<!-- Возможности -->
+<section class="landing-section features-section">
   <div class="container">
-    <h2 class="section-title text-center">Шаблоны открыток</h2>
-    <div class="grid-3" id="templatesPreview">
-      <div class="spinner"></div>
-    </div>
-    <div class="text-center mt-3">
-      <a href="/editor" class="btn btn-primary">Начать создание</a>
+    <p class="section-eyebrow">Всё что нужно</p>
+    <h2 class="landing-section-title">Возможности InviteCard</h2>
+    <div class="features-grid">
+      <div class="feature-item">
+        <span class="feature-icon">🖼️</span>
+        <div>
+          <h4>Фото и видео</h4>
+          <p>Загружайте медиафайлы или вставляйте YouTube-ролики прямо в открытку.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📱</span>
+        <div>
+          <h4>QR-код</h4>
+          <p>Автоматически генерируется для каждой открытки — удобно для печатных материалов.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">✉️</span>
+        <div>
+          <h4>Рассылка приглашений</h4>
+          <p>Отправляйте приглашения по email или через Telegram прямо из личного кабинета.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">🔔</span>
+        <div>
+          <h4>Напоминания</h4>
+          <p>Автоматические напоминания гостям за несколько дней до мероприятия.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">📊</span>
+        <div>
+          <h4>RSVP-статистика</h4>
+          <p>Кто придёт, кто не сможет, кто ещё не ответил — всё в одном месте.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <span class="feature-icon">🎭</span>
+        <div>
+          <h4>Шаблоны под любой повод</h4>
+          <p>Свадьба, день рождения, корпоратив — готовые дизайны для быстрого старта.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
-<footer style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.85rem;border-top:1px solid var(--border);">
-  © 2025 InviteCard
+<!-- CTA -->
+<section class="landing-cta">
+  <div class="cta-decor">
+    <span class="decor-circle c4"></span>
+    <span class="decor-circle c5"></span>
+  </div>
+  <div class="container cta-content">
+    <h2>Готовы создать своё приглашение?</h2>
+    <p>Зарегистрируйтесь бесплатно и сделайте первую открытку прямо сейчас.</p>
+    <a href="/register.html" class="btn btn-hero-primary">Попробовать бесплатно</a>
+  </div>
+</section>
+
+<footer class="landing-footer">
+  <div class="container footer-inner">
+    <span class="footer-brand">💌 InviteCard</span>
+    <span class="footer-copy">© 2025 InviteCard. Все права защищены.</span>
+  </div>
 </footer>
 
 <script>
-  // Проверяем авторизацию
   fetch('/api/auth/me').then(r => r.json()).then(data => {
     if (data.loggedIn) {
       document.getElementById('navLinks').innerHTML = `
-        <span style="color:var(--text-muted);font-size:0.9rem">Привет, ${data.name}</span>
-        <a href="/dashboard">Мои открытки</a>
-        <button class="btn btn-outline btn-sm" onclick="logout()">Выйти</button>
+        <span class="nav-greeting">Привет, ${data.name} 👋</span>
+        <a href="/dashboard" class="btn btn-primary btn-sm">Мои открытки</a>
+        <button class="btn btn-hero-outline btn-sm" onclick="logout()">Выйти</button>
       `;
+      // Меняем CTA для залогиненных
+      document.querySelectorAll('a[href="/register.html"]').forEach(el => {
+        el.href = '/editor';
+        if (el.classList.contains('btn-hero-primary')) el.textContent = 'Создать открытку';
+      });
     }
   });
 
   function logout() {
     fetch('/api/auth/logout', { method: 'POST' }).then(() => location.reload());
   }
-
-  // Загружаем шаблоны
-  fetch('/api/cards/templates').then(r => r.json()).then(templates => {
-    const container = document.getElementById('templatesPreview');
-    container.innerHTML = templates.map(t => `
-      <div class="template-card">
-        <div style="height:160px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:3rem">
-          ${t.name === 'Свадьба' ? '💍' : t.name === 'День рождения' ? '🎂' : '🎉'}
-        </div>
-        <div class="template-name">${t.name}</div>
-      </div>
-    `).join('');
-  }).catch(() => {
-    document.getElementById('templatesPreview').innerHTML = '<p class="text-muted">Не удалось загрузить шаблоны</p>';
-  });
 </script>
 </body>
 </html>

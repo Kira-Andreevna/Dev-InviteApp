@@ -6,14 +6,16 @@ let editingSlug = null;
 window.design = {};
 
 const BLOCK_LABELS = {
-  hero: '🎉 Заголовок',
-  story: '📖 История',
-  gallery: '📷 Фото',
-  date: '📅 Дата',
-  palette: '🎨 Палитра',
-  details: '📌 Детали',
-  wishes: '💌 Пожелания',
-  video: '🎬 Видео'
+  hero:         '✏️ Заголовок',
+  story:        '🗒️ Текст',
+  gallery:      '📷 Фото',
+  date:         '📅 Дата',
+  'event-time': '🕐 Время',
+  'event-place':'📍 Место',
+  palette:      '🎨 Палитра',
+  details:      '📌 Детали',
+  wishes:       '💌 Пожелания',
+  video:        '🎬 Видео'
 };
 
 function blockTypeLabel(type) {
@@ -187,12 +189,24 @@ function renderBlockInput(block, i) {
 
     case 'date':
       return `
-        <input type="date" class="form-control" value="${block.value || ''}"
-          oninput="updateBlock(${i}, 'value', this.value)">
-        <input type="time" class="form-control mt-1" value="${block.time || ''}"
-          oninput="updateBlock(${i}, 'time', this.value)" placeholder="Время">
-        <input type="text" class="form-control mt-1" placeholder="Место проведения"
-          value="${escAttr(block.place || '')}" oninput="updateBlock(${i}, 'place', this.value)">`;
+        <div style="margin-bottom:0.5rem">
+          <input type="date" class="form-control" value="${block.value || ''}"
+            oninput="updateBlock(${i}, 'value', this.value)">
+        </div>`;
+
+    case 'event-time':
+      return `
+        <div>
+          <input type="time" class="form-control" value="${block.time || ''}"
+            oninput="updateBlock(${i}, 'time', this.value)" placeholder="Время">
+        </div>`;
+
+    case 'event-place':
+      return `
+        <div>
+          <input type="text" class="form-control" placeholder="Адрес или название места"
+            value="${escAttr(block.place || '')}" oninput="updateBlock(${i}, 'place', this.value)">
+        </div>`;
 
     case 'palette':
       return `
@@ -264,7 +278,7 @@ function toggleBlockPicker() {
 }
 
 function renderBlockPicker() {
-  const textTypes = ['hero', 'story', 'details', 'wishes', 'date', 'palette'];
+  const textTypes = ['hero', 'story', 'details', 'wishes', 'date', 'event-time', 'event-place', 'palette'];
   const mediaTypes = ['gallery', 'video'];
 
   document.getElementById('textBlockBtns').innerHTML = textTypes.map(t => `
@@ -346,8 +360,8 @@ function removeFile(blockIndex, fileIndex) {
 function renderPreview() {
   const preview = document.getElementById('invitePreview');
   preview.innerHTML = blocks.map(block => renderPreviewBlock(block)).join('');
-  // Применяем только CSS-переменные (без рекурсивного вызова renderPreview)
   if (typeof applyDesignVars === 'function') applyDesignVars();
+  if (typeof updateDecorationOverlay === 'function') updateDecorationOverlay(preview, window.design.decoration);
 }
 
 function layoutStyle(block) {
@@ -378,47 +392,83 @@ function renderPreviewBlock(block) {
   const pc  = d.colorPrimary || 'var(--primary)';
   const h1  = d.colorHero1   || 'var(--primary)';
   const h2  = d.colorHero2   || 'var(--accent)';
+  const bc  = d.colorBlock   || d.colorBg || '#ffffff';
   const ls  = layoutStyle(block);
   const ms  = mediaSizeStyle(block);
 
+  // Тень блока
+  const sc = d.shadowColor || '#000000';
+  const sr = parseInt(sc.slice(1,3),16), sg = parseInt(sc.slice(3,5),16), sb = parseInt(sc.slice(5,7),16);
+  const srgba = (a) => `rgba(${sr},${sg},${sb},${a})`;
+  const shadowMap = {
+    none:   'none',
+    soft:   `0 4px 20px ${srgba(0.10)}`,
+    lifted: `0 8px 32px ${srgba(0.18)}, 0 2px 8px ${srgba(0.08)}`,
+    glow:   `0 0 28px ${srgba(0.45)}, 0 4px 16px ${srgba(0.12)}`,
+  };
+  const shadow = shadowMap[d.blockShadow] ?? shadowMap.soft;
+
+  // Стиль Hero
+  const heroStyleCSS = typeof getHeroStyle === 'function'
+    ? getHeroStyle(d.heroStyle, h1, h2)
+    : `background:linear-gradient(135deg,${h1},${h2});`;
+
+  // Разделитель
+  const divider = getDividerHTML(d.dividerStyle, pc);
+
   switch (block.type) {
     case 'hero':
-      return `<div class="preview-hero" style="background:linear-gradient(135deg,${h1},${h2});border-radius:${r} ${r} 0 0">
+      return `<div class="preview-hero preview-hero--${d.heroStyle || 'gradient'}" style="${heroStyleCSS}border-radius:${r} ${r} 0 0">
+        ${d.heroStyle === 'wave' ? `<div class="hero-wave-shape"></div>` : ''}
         <h1 style="font-family:${fh};font-size:${fhs}">${escHtml(block.value || 'Заголовок мероприятия')}</h1>
         ${block.subtitle ? `<p style="font-family:${fb};font-size:${fs}">${escHtml(block.subtitle)}</p>` : ''}
       </div>`;
 
     case 'story':
-      return `<div class="preview-block" style="${ls}border-radius:${r}">
-        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">📖 Наша история</h2>
+      return `${divider}<div class="preview-block" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div style="flex:1">
+
         <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'details':
-      return `<div class="preview-block" style="${ls}border-radius:${r}">
-        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">📌 Важные детали</h2>
+      return `${divider}<div class="preview-block" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div style="flex:1">
+
         <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'wishes':
-      return `<div class="preview-block" style="${ls}border-radius:${r}">
-        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">💌 Пожелания</h2>
+      return `${divider}<div class="preview-block" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div style="flex:1">
+    
         <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'date':
-      return `<div class="preview-date" style="border-radius:${r}">
-        <div class="preview-date-icon">📅</div>
+      return `${divider}<div class="preview-date" style="border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
         <div class="preview-date-text">
-          <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">Дата и место</h2>
-          <p style="font-family:${fb};font-size:${fs};color:${tc}">${block.value ? formatDate(block.value) : 'Дата не указана'}${block.time ? ' в ' + block.time : ''}</p>
-          ${block.place ? `<p style="color:var(--text-muted);font-size:0.9rem;font-family:${fb}">📍 ${escHtml(block.place)}</p>` : ''}
+          ${block.value ? `<p style="font-family:${fb};font-size:${fs};color:${tc}">${formatDate(block.value)}</p>` : '<p style="color:var(--text-muted)">Дата не указана</p>'}
+        </div>
+      </div>`;
+
+    case 'event-time':
+      return `${divider}<div class="preview-date" style="border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div class="preview-date-text">
+          ${block.time ? `<p style="font-family:${fb};font-size:${fs};color:${tc}">${block.time}</p>` : '<p style="color:var(--text-muted)">Время не указано</p>'}
+        </div>
+      </div>`;
+
+    case 'event-place':
+      return `${divider}<div class="preview-date" style="border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div class="preview-date-text">
+          ${block.place ? `<p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.place)}</p>` : '<p style="color:var(--text-muted)">Место не указано</p>'}
         </div>
       </div>`;
 
     case 'palette':
-      return `<div class="preview-palette" style="border-radius:${r}">
-        <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🎨 Цветовая палитра</h2>
+      return `${divider}<div class="preview-palette" style="border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        
         <div class="color-palette">
           ${(block.colors || []).map(c => `<div class="color-swatch" style="background:${c}" title="${c}"></div>`).join('')}
         </div>
@@ -426,8 +476,9 @@ function renderPreviewBlock(block) {
 
     case 'gallery':
       if (!block.files || !block.files.length) return '';
-      return `<div class="preview-gallery" style="${ls}border-radius:${r}">
-        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🖼 Фотогалерея</h2>
+      return `${divider}<div class="preview-gallery" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div style="flex:1">
+
         <div class="gallery-grid" style="${ms}border-radius:${r}">
           ${block.files.map(f => `<img src="${f}" alt="фото" style="border-radius:${r}">`).join('')}
         </div></div>
@@ -436,8 +487,9 @@ function renderPreviewBlock(block) {
     case 'video': {
       if (!block.value) return '';
       const isYT = block.value.includes('youtube') || block.value.includes('youtu.be');
-      return `<div class="preview-block" style="${ls}border-radius:${r}">
-        <div style="flex:1"><h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🎬 Видео</h2>
+      return `${divider}<div class="preview-block" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div style="flex:1">
+      
         <div style="${ms}">
           ${isYT
             ? `<iframe width="100%" height="220" src="${ytEmbed(block.value)}" frameborder="0" allowfullscreen style="border-radius:${r}"></iframe>`
@@ -448,6 +500,19 @@ function renderPreviewBlock(block) {
 
     default:
       return '';
+  }
+}
+
+function getDividerHTML(style, color) {
+  if (!style || style === 'none') return '';
+  const c = color || '#7c5cbf';
+  switch (style) {
+    case 'line':    return `<div style="height:1px;background:${c}33;margin:0.5rem 2rem"></div>`;
+    case 'dots':    return `<div style="text-align:center;color:${c};opacity:0.4;font-size:0.6rem;letter-spacing:6px;padding:0.3rem 0">● ● ●</div>`;
+    case 'wave':    return `<div class="divider-wave" style="color:${c}55">〰〰〰〰〰〰〰〰〰〰</div>`;
+    case 'diamond': return `<div style="text-align:center;color:${c};opacity:0.5;font-size:0.8rem;padding:0.3rem 0">◆ ◇ ◆</div>`;
+    case 'floral':  return `<div style="text-align:center;color:${c};opacity:0.5;font-size:1rem;padding:0.3rem 0">❧ ✦ ❧</div>`;
+    default:        return '';
   }
 }
 
@@ -517,3 +582,11 @@ function ytEmbed(url) {
   const match = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/);
   return match ? `https://www.youtube.com/embed/${match[1]}` : url;
 }
+
+    // <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🎬 Видео</h2>
+    // <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🖼 Фотогалерея</h2>
+    // <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🎨 Цветовая палитра</h2>
+    // <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">💌 Пожелания</h2>
+    //<h2 style="font-family:${fh};font-size:${fhs};color:${pc}">Дата и место</h2>
+    //<h2 style="font-family:${fh};font-size:${fhs};color:${pc}">📌 Важные детали</h2>
+    //<h2 style="font-family:${fh};font-size:${fhs};color:${pc}">📖 Наша история</h2>

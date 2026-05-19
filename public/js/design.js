@@ -3,51 +3,70 @@
 const DEFAULT_DESIGN = {
   colorPrimary: '#7c5cbf',
   colorBg:      '#ffffff',
+  colorBlock:   '#ffffff',
   colorText:    '#2d2d2d',
   colorHero1:   '#7c5cbf',
   colorHero2:   '#f4a261',
   fontHeading:  "'Segoe UI', sans-serif",
   fontBody:     "'Segoe UI', sans-serif",
-  fontSizeBase: 16,      // размер основного текста (px)
-  fontSizeRatio: 1.8,    // коэффициент: заголовок = base * ratio
-  fontSizeLocked: true,  // связаны ли слайдеры
+  fontSizeBase: 16,
+  fontSizeRatio: 1.8,
+  fontSizeLocked: true,
   radius:       12,
+  blockGap:     16,
   decoration:   null,
+  bgPattern:    null,
+  heroStyle:    'gradient',
+  dividerStyle: 'none',
+  blockShadow:  'soft',
+  shadowColor:  '#000000',
+  animation:    'fade',
   _theme:       null
 };
 
 // ===== Шрифты =====
-// Сгруппированы по характеру — реально разные
 const FONTS_HEADING = [
-  // Элегантные засечки
-  { label: 'Cormorant Garamond — элегантный',  value: "'Cormorant Garamond', serif",  gf: 'Cormorant+Garamond' },
-  { label: 'Playfair Display — классика',       value: "'Playfair Display', serif",    gf: 'Playfair+Display' },
-  { label: 'Libre Baskerville — книжный',       value: "'Libre Baskerville', serif",   gf: 'Libre+Baskerville' },
-  // Гротески
-  { label: 'Montserrat — современный',          value: "'Montserrat', sans-serif",     gf: 'Montserrat' },
-  { label: 'Raleway — геометричный',            value: "'Raleway', sans-serif",        gf: 'Raleway' },
-  { label: 'Oswald — плотный',                  value: "'Oswald', sans-serif",         gf: 'Oswald' },
-  { label: 'Bebas Neue — жирный дисплей',       value: "'Bebas Neue', cursive",        gf: 'Bebas+Neue' },
-  // Рукописные
-  { label: 'Pacifico — дружелюбный',            value: "'Pacifico', cursive",          gf: 'Pacifico' },
-  { label: 'Lobster — ретро',                   value: "'Lobster', cursive",           gf: 'Lobster' },
-  { label: 'Dancing Script — каллиграфия',      value: "'Dancing Script', cursive",    gf: 'Dancing+Script' },
-  { label: 'Great Vibes — свадебный',           value: "'Great Vibes', cursive",       gf: 'Great+Vibes' },
-  { label: 'Sacramento — тонкая рукопись',      value: "'Sacramento', cursive",        gf: 'Sacramento' },
-  // Системный
-  { label: 'Segoe UI — системный',              value: "'Segoe UI', sans-serif",       gf: null },
+  // ✦ Роскошные засечки
+  { label: 'Cormorant Garamond',  value: "'Cormorant Garamond', serif",   gf: 'Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400' },
+  { label: 'Playfair Display',    value: "'Playfair Display', serif",     gf: 'Playfair+Display:ital,wght@0,400;0,700;1,400' },
+  { label: 'DM Serif Display',    value: "'DM Serif Display', serif",     gf: 'DM+Serif+Display:ital@0;1' },
+  { label: 'Bodoni Moda',         value: "'Bodoni Moda', serif",          gf: 'Bodoni+Moda:ital,wght@0,400;0,700;1,400' },
+  { label: 'Libre Baskerville',   value: "'Libre Baskerville', serif",    gf: 'Libre+Baskerville:ital,wght@0,400;0,700;1,400' },
+  { label: 'Spectral',            value: "'Spectral', serif",             gf: 'Spectral:ital,wght@0,300;0,600;1,300' },
+  // ✦ Современные гротески
+  { label: 'Montserrat',          value: "'Montserrat', sans-serif",      gf: 'Montserrat:wght@300;400;700;900' },
+  { label: 'Raleway',             value: "'Raleway', sans-serif",         gf: 'Raleway:wght@300;400;700' },
+  { label: 'Josefin Sans',        value: "'Josefin Sans', sans-serif",    gf: 'Josefin+Sans:wght@100;300;400;700' },
+  { label: 'Bebas Neue',          value: "'Bebas Neue', cursive",         gf: 'Bebas+Neue' },
+  { label: 'Oswald',              value: "'Oswald', sans-serif",          gf: 'Oswald:wght@300;400;700' },
+  { label: 'Cinzel',              value: "'Cinzel', serif",               gf: 'Cinzel:wght@400;700;900' },
+  // ✦ Каллиграфия и рукопись
+  { label: 'Great Vibes',         value: "'Great Vibes', cursive",        gf: 'Great+Vibes' },
+  { label: 'Sacramento',          value: "'Sacramento', cursive",         gf: 'Sacramento' },
+  { label: 'Pinyon Script',       value: "'Pinyon Script', cursive",      gf: 'Pinyon+Script' },
+  { label: 'Alex Brush',          value: "'Alex Brush', cursive",         gf: 'Alex+Brush' },
+  { label: 'Tangerine',           value: "'Tangerine', cursive",          gf: 'Tangerine:wght@400;700' },
+  { label: 'Dancing Script',      value: "'Dancing Script', cursive",     gf: 'Dancing+Script:wght@400;700' },
+  { label: 'Pacifico',            value: "'Pacifico', cursive",           gf: 'Pacifico' },
+  { label: 'Lobster',             value: "'Lobster', cursive",            gf: 'Lobster' },
+  // ✦ Системный
+  { label: 'Segoe UI',            value: "'Segoe UI', sans-serif",        gf: null },
 ];
 
 const FONTS_BODY = [
-  { label: 'Lato — нейтральный',               value: "'Lato', sans-serif",           gf: 'Lato' },
-  { label: 'Open Sans — читаемый',              value: "'Open Sans', sans-serif",      gf: 'Open+Sans' },
-  { label: 'Roboto — технологичный',            value: "'Roboto', sans-serif",         gf: 'Roboto' },
-  { label: 'Nunito — мягкий',                   value: "'Nunito', sans-serif",         gf: 'Nunito' },
-  { label: 'PT Sans — русский дизайн',          value: "'PT Sans', sans-serif",        gf: 'PT+Sans' },
-  { label: 'Merriweather — газетный',           value: "'Merriweather', serif",        gf: 'Merriweather' },
-  { label: 'PT Serif — академичный',            value: "'PT Serif', serif",            gf: 'PT+Serif' },
-  { label: 'Source Sans 3 — чистый',            value: "'Source Sans 3', sans-serif",  gf: 'Source+Sans+3' },
-  { label: 'Segoe UI — системный',              value: "'Segoe UI', sans-serif",       gf: null },
+  { label: 'Lato',                value: "'Lato', sans-serif",            gf: 'Lato:wght@300;400;700' },
+  { label: 'Open Sans',           value: "'Open Sans', sans-serif",       gf: 'Open+Sans:wght@300;400;600' },
+  { label: 'Nunito',              value: "'Nunito', sans-serif",          gf: 'Nunito:wght@300;400;600' },
+  { label: 'Jost',                value: "'Jost', sans-serif",            gf: 'Jost:wght@300;400;500' },
+  { label: 'DM Sans',             value: "'DM Sans', sans-serif",         gf: 'DM+Sans:wght@300;400;500' },
+  { label: 'Inter',               value: "'Inter', sans-serif",           gf: 'Inter:wght@300;400;500' },
+  { label: 'Roboto',              value: "'Roboto', sans-serif",          gf: 'Roboto:wght@300;400;500' },
+  { label: 'PT Sans',             value: "'PT Sans', sans-serif",         gf: 'PT+Sans:wght@400;700' },
+  { label: 'Merriweather',        value: "'Merriweather', serif",         gf: 'Merriweather:wght@300;400;700' },
+  { label: 'PT Serif',            value: "'PT Serif', serif",             gf: 'PT+Serif' },
+  { label: 'Cormorant',           value: "'Cormorant', serif",            gf: 'Cormorant:wght@300;400;500' },
+  { label: 'Source Sans 3',       value: "'Source Sans 3', sans-serif",   gf: 'Source+Sans+3:wght@300;400;600' },
+  { label: 'Segoe UI',            value: "'Segoe UI', sans-serif",        gf: null },
 ];
 
 // ===== Темы =====
@@ -129,12 +148,66 @@ const DECORATIONS = [
   { id: 'butterflies',name:'Бабочки',    preview: '🦋', emojis: ['🦋','🌸','🌺','✨','🌿','💜'] },
 ];
 
+// ===== Фоновые паттерны =====
+const BG_PATTERNS = [
+  { id: null,       name: 'Нет',        preview: '' },
+  { id: 'dots',     name: 'Точки',      preview: '' },
+  { id: 'grid',     name: 'Сетка',      preview: '' },
+  { id: 'diagonal', name: 'Диагональ',  preview: '' },
+  { id: 'waves',    name: 'Волны',      preview: '' },
+  { id: 'circles',  name: 'Круги',      preview: '' },
+  { id: 'noise',    name: 'Шум',        preview: '' },
+  { id: 'linen',    name: 'Лён',        preview: '' },
+];
+
+// ===== Стили Hero-блока =====
+const HERO_STYLES = [
+  { id: 'gradient',  name: 'Градиент',   preview: '' },
+  { id: 'solid',     name: 'Сплошной',   preview: '' },
+  { id: 'wave',      name: 'Волна',      preview: '' },
+  { id: 'diagonal',  name: 'Диагональ',  preview: '' },
+  { id: 'glass',     name: 'Стекло',     preview: '' },
+  { id: 'dark',      name: 'Тёмный',     preview: '' },
+];
+
+// ===== Разделители блоков =====
+const DIVIDER_STYLES = [
+  { id: 'none',    name: 'Нет',      preview: '' },
+  { id: 'line',    name: 'Линия',    preview: '' },
+  { id: 'dots',    name: 'Точки',    preview: '' },
+  { id: 'wave',    name: 'Волна',    preview: '' },
+  { id: 'diamond', name: 'Ромб',     preview: '' },
+  { id: 'floral',  name: 'Флора',    preview: '' },
+];
+
+// ===== Тени блоков =====
+const BLOCK_SHADOWS = [
+  { id: 'none',    name: 'Нет' },
+  { id: 'soft',    name: 'Мягкая' },
+  { id: 'lifted',  name: 'Поднятая' },
+  { id: 'glow',    name: 'Свечение' },
+];
+
+// ===== Анимации появления =====
+const ANIMATIONS = [
+  { id: 'none',    name: 'Нет' },
+  { id: 'fade',    name: 'Плавно' },
+  { id: 'slide',   name: 'Снизу' },
+  { id: 'zoom',    name: 'Масштаб' },
+  { id: 'flip',    name: 'Переворот' },
+];
+
 // ===== Инициализация =====
 function initDesignPanel(designData) {
   window.design = Object.assign({}, DEFAULT_DESIGN, designData || {});
   renderFontSelects();
   renderThemes();
   renderDecorations();
+  renderBgPatterns();
+  renderHeroStyles();
+  renderDividerStyles();
+  renderBlockShadows();
+  renderAnimations();
   syncDesignControls();
   applyDesignToPreview();
 }
@@ -163,17 +236,71 @@ function renderThemes() {
 function renderDecorations() {
   document.getElementById('decorationsList').innerHTML = DECORATIONS.map(d => `
     <div class="decoration-card ${window.design.decoration === d.id ? 'selected' : ''}"
-         onclick="selectDecoration(${JSON.stringify(d.id)})">
+         onclick="selectDecoration(${d.id === null ? 'null' : `'${d.id}'`})">
       <span style="font-size:1.3rem">${d.preview}</span>
       <span style="font-size:0.65rem;margin-top:0.2rem;text-align:center">${d.name}</span>
     </div>
   `).join('');
 }
 
+function renderBgPatterns() {
+  const el = document.getElementById('bgPatternsList');
+  if (!el) return;
+  el.innerHTML = BG_PATTERNS.map(p => `
+    <div class="style-chip ${window.design.bgPattern === p.id ? 'selected' : ''}"
+         onclick="selectBgPattern(${p.id === null ? 'null' : `'${p.id}'`})">
+      <span class="style-chip-icon">${p.preview}</span>
+      <span>${p.name}</span>
+    </div>`).join('');
+}
+
+function renderHeroStyles() {
+  const el = document.getElementById('heroStylesList');
+  if (!el) return;
+  el.innerHTML = HERO_STYLES.map(s => `
+    <div class="style-chip ${window.design.heroStyle === s.id ? 'selected' : ''}"
+         onclick="selectHeroStyle('${s.id}')">
+      <span class="style-chip-icon">${s.preview}</span>
+      <span>${s.name}</span>
+    </div>`).join('');
+}
+
+function renderDividerStyles() {
+  const el = document.getElementById('dividerStylesList');
+  if (!el) return;
+  el.innerHTML = DIVIDER_STYLES.map(s => `
+    <div class="style-chip ${window.design.dividerStyle === s.id ? 'selected' : ''}"
+         onclick="selectDividerStyle('${s.id}')">
+      <span class="style-chip-icon">${s.preview}</span>
+      <span>${s.name}</span>
+    </div>`).join('');
+}
+
+function renderBlockShadows() {
+  const el = document.getElementById('blockShadowsList');
+  if (!el) return;
+  el.innerHTML = BLOCK_SHADOWS.map(s => `
+    <div class="style-chip ${window.design.blockShadow === s.id ? 'selected' : ''}"
+         onclick="selectBlockShadow('${s.id}')">
+      <span>${s.name}</span>
+    </div>`).join('');
+}
+
+function renderAnimations() {
+  const el = document.getElementById('animationsList');
+  if (!el) return;
+  el.innerHTML = ANIMATIONS.map(a => `
+    <div class="style-chip ${window.design.animation === a.id ? 'selected' : ''}"
+         onclick="selectAnimation('${a.id}')">
+      <span>${a.name}</span>
+    </div>`).join('');
+}
+
 function syncDesignControls() {
   const d = window.design;
   setVal('dColorPrimary', d.colorPrimary);
   setVal('dColorBg',      d.colorBg);
+  setVal('dColorBlock',   d.colorBlock || d.colorBg);
   setVal('dColorText',    d.colorText);
   setVal('dColorHero1',   d.colorHero1);
   setVal('dColorHero2',   d.colorHero2);
@@ -182,13 +309,17 @@ function syncDesignControls() {
   setVal('dFontSizeBase', d.fontSizeBase);
   setVal('dFontRatio',    d.fontSizeRatio);
   setVal('dRadius',       d.radius);
+  setVal('dBlockGap',     d.blockGap ?? 16);
+  setVal('dShadowColor',  d.shadowColor || '#000000');
 
   const base  = d.fontSizeBase  || 16;
   const ratio = d.fontSizeRatio || 1.8;
   document.getElementById('dFontSizeBaseVal').textContent  = base + 'px';
   document.getElementById('dFontRatioVal').textContent     = 'заг. ' + Math.round(base * ratio) + 'px';
   document.getElementById('dRadiusVal').textContent        = radiusLabel(d.radius);
+  document.getElementById('dBlockGapVal').textContent      = (d.blockGap ?? 16) + 'px';
   updateLockBtn(d.fontSizeLocked);
+  updateShadowColorVisibility(d.blockShadow);
 }
 
 function setVal(id, val) {
@@ -204,11 +335,52 @@ function radiusLabel(r) {
   return r + 'px — очень круглые';
 }
 
+// ===== Генерация CSS фонового паттерна =====
+function getBgPatternCSS(patternId, primaryColor) {
+  const c = primaryColor || '#7c5cbf';
+  // Конвертируем hex в rgba с низкой прозрачностью
+  const r = parseInt(c.slice(1,3),16), g = parseInt(c.slice(3,5),16), b = parseInt(c.slice(5,7),16);
+  const rgba = (a) => `rgba(${r},${g},${b},${a})`;
+
+  switch (patternId) {
+    case 'dots':
+      return `radial-gradient(${rgba(0.12)} 1.5px, transparent 1.5px)`;
+    case 'grid':
+      return `linear-gradient(${rgba(0.08)} 1px, transparent 1px), linear-gradient(90deg, ${rgba(0.08)} 1px, transparent 1px)`;
+    case 'diagonal':
+      return `repeating-linear-gradient(45deg, ${rgba(0.06)} 0, ${rgba(0.06)} 1px, transparent 0, transparent 50%)`;
+    case 'waves':
+      return `repeating-linear-gradient(0deg, transparent, transparent 28px, ${rgba(0.07)} 28px, ${rgba(0.07)} 30px)`;
+    case 'circles':
+      return `radial-gradient(circle at 50% 50%, ${rgba(0.05)} 20%, transparent 20%), radial-gradient(circle at 0% 0%, ${rgba(0.05)} 20%, transparent 20%)`;
+    case 'noise':
+      return `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E")`;
+    case 'linen':
+      return `repeating-linear-gradient(0deg, ${rgba(0.04)}, ${rgba(0.04)} 1px, transparent 1px, transparent 4px), repeating-linear-gradient(90deg, ${rgba(0.04)}, ${rgba(0.04)} 1px, transparent 1px, transparent 4px)`;
+    default:
+      return 'none';
+  }
+}
+
+// ===== Генерация стиля Hero =====
+function getHeroStyle(heroStyle, h1, h2) {
+  switch (heroStyle) {
+    case 'solid':    return `background:${h1};`;
+    case 'wave':     return `background:linear-gradient(160deg,${h1} 0%,${h2} 100%);`;
+    case 'diagonal': return `background:linear-gradient(135deg,${h1} 50%,${h2} 50%);`;
+    case 'glass':    return `background:linear-gradient(135deg,${h1}cc,${h2}99);backdrop-filter:blur(10px);`;
+    case 'dark':     return `background:linear-gradient(135deg,#0d0d0d,#1a1a2e);`;
+    default:         return `background:linear-gradient(135deg,${h1},${h2});`;
+  }
+}
+
 // ===== Применение темы =====
 function applyTheme(themeId) {
   const theme = THEMES.find(t => t.id === themeId);
   if (!theme) return;
   Object.assign(window.design, theme.colors, theme.fonts, { _theme: themeId });
+  // colorBlock следует за colorBg при смене темы
+  window.design.colorBlock = theme.colors.colorBg;
   syncDesignControls();
   loadGoogleFonts();
   applyDesignToPreview();
@@ -218,7 +390,7 @@ function applyTheme(themeId) {
 // ===== Дебаунс для слайдеров =====
 let _designTimer = null;
 function updateDesignDebounced(key, value) {
-  if (['fontSizeBase','fontSizeRatio','radius'].includes(key)) {
+  if (['fontSizeBase','fontSizeRatio','radius','blockGap'].includes(key)) {
     window.design[key] = parseFloat(value);
   } else {
     window.design[key] = value;
@@ -233,7 +405,9 @@ function updateDesignDebounced(key, value) {
   if (key === 'radius') {
     document.getElementById('dRadiusVal').textContent = radiusLabel(value);
   }
-
+  if (key === 'blockGap') {
+    document.getElementById('dBlockGapVal').textContent = Math.round(value) + 'px';
+  }
   // Шрифты грузим сразу, остальное — с задержкой
   if (key === 'fontHeading' || key === 'fontBody') {
     loadGoogleFonts();
@@ -271,6 +445,42 @@ function selectDecoration(id) {
   applyDesignToPreview();
 }
 
+function selectBgPattern(id) {
+  window.design.bgPattern = id;
+  renderBgPatterns();
+  applyDesignToPreview();
+}
+
+function selectHeroStyle(id) {
+  window.design.heroStyle = id;
+  renderHeroStyles();
+  applyDesignToPreview();
+}
+
+function selectDividerStyle(id) {
+  window.design.dividerStyle = id;
+  renderDividerStyles();
+  applyDesignToPreview();
+}
+
+function selectBlockShadow(id) {
+  window.design.blockShadow = id;
+  renderBlockShadows();
+  updateShadowColorVisibility(id);
+  applyDesignToPreview();
+}
+
+function updateShadowColorVisibility(shadowId) {
+  const row = document.getElementById('dShadowColorRow');
+  if (row) row.style.display = (shadowId === 'soft' || shadowId === 'lifted' || shadowId === 'glow') ? 'flex' : 'none';
+}
+
+function selectAnimation(id) {
+  window.design.animation = id;
+  renderAnimations();
+  applyDesignToPreview();
+}
+
 // ===== Применение только CSS-переменных (без перерисовки блоков) =====
 function applyDesignVars() {
   const d = window.design;
@@ -283,6 +493,7 @@ function applyDesignVars() {
 
   preview.style.setProperty('--inv-primary', d.colorPrimary);
   preview.style.setProperty('--inv-bg',       d.colorBg);
+  preview.style.setProperty('--inv-block-bg', d.colorBlock || d.colorBg);
   preview.style.setProperty('--inv-text',     d.colorText);
   preview.style.setProperty('--inv-hero1',    d.colorHero1);
   preview.style.setProperty('--inv-hero2',    d.colorHero2);
@@ -291,14 +502,25 @@ function applyDesignVars() {
   preview.style.setProperty('--inv-fsize',    base + 'px');
   preview.style.setProperty('--inv-hsize',    hSize + 'px');
   preview.style.setProperty('--inv-radius',   d.radius + 'px');
+  preview.style.setProperty('--inv-block-gap', (d.blockGap ?? 16) + 'px');
   preview.style.backgroundColor = d.colorBg;
+
+  // Фоновый паттерн
+  preview.style.backgroundImage = getBgPatternCSS(d.bgPattern, d.colorPrimary);
+  const patternSizes = { dots:'24px 24px', grid:'32px 32px', diagonal:'8px 8px', circles:'60px 60px', waves:'auto 32px', linen:'4px 4px' };
+  preview.style.backgroundSize = patternSizes[d.bgPattern] || 'auto';
+
+  // Тень блоков
+  preview.setAttribute('data-shadow', d.blockShadow || 'soft');
+  preview.setAttribute('data-hero-style', d.heroStyle || 'gradient');
+  preview.setAttribute('data-divider', d.dividerStyle || 'none');
 }
 
 // ===== Применение дизайна к превью (перерисовка + переменные) =====
 function applyDesignToPreview() {
+  if (typeof renderPreview === 'function') renderPreview();
   applyDesignVars();
   updateDecorationOverlay(document.getElementById('invitePreview'), window.design.decoration);
-  if (typeof renderPreview === 'function') renderPreview();
 }
 
 // ===== Декоративный оверлей =====

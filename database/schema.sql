@@ -25,19 +25,56 @@ CREATE TABLE IF NOT EXISTS cards (
   template_id INT DEFAULT NULL,
   content_json JSON NOT NULL,
   is_published TINYINT DEFAULT 1,
+  event_date DATE DEFAULT NULL,
+  reminder_days INT DEFAULT 3,
+  notify_email VARCHAR(150) DEFAULT NULL,
+  notify_tg_chat_id VARCHAR(100) DEFAULT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FULLTEXT KEY idx_cards_title (title),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
   FOREIGN KEY (template_id) REFERENCES templates(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS card_versions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  card_id INT NOT NULL,
+  version INT NOT NULL DEFAULT 1,
+  title VARCHAR(200) NOT NULL,
+  content_json JSON NOT NULL,
+  saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS guests (
   id INT AUTO_INCREMENT PRIMARY KEY,
   card_id INT NOT NULL,
   full_name VARCHAR(200) NOT NULL,
+  email VARCHAR(150) DEFAULT NULL,
   attending ENUM('yes', 'no', 'maybe') DEFAULT 'maybe',
   is_minor TINYINT DEFAULT 0,
   minor_age TINYINT DEFAULT NULL,
   note TEXT DEFAULT NULL,
+  viewed_at TIMESTAMP NULL DEFAULT NULL,
+  reminded_at TIMESTAMP NULL DEFAULT NULL,
   submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS sessions (
+  session_id VARCHAR(128) NOT NULL PRIMARY KEY,
+  expires INT(11) UNSIGNED NOT NULL,
+  data MEDIUMTEXT DEFAULT NULL
+);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  card_id INT NOT NULL,
+  guest_id INT DEFAULT NULL,
+  type ENUM('rsvp_alert', 'invite_sent', 'reminder') NOT NULL,
+  channel ENUM('email', 'telegram') NOT NULL,
+  recipient VARCHAR(200) NOT NULL,
+  status ENUM('sent', 'failed') NOT NULL,
+  sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (card_id) REFERENCES cards(id) ON DELETE CASCADE,
+  FOREIGN KEY (guest_id) REFERENCES guests(id) ON DELETE SET NULL
 );

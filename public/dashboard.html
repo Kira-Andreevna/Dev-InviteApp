@@ -9,18 +9,18 @@
 <body>
 
 <nav class="navbar">
-  <a class="navbar-brand" href="/">✉️ <span>InviteCard</span></a>
+  <a class="navbar-brand" href="/">💌 <span>InviteCard</span></a>
   <div class="navbar-nav">
     <span id="userName" style="color:var(--text-muted);font-size:0.9rem"></span>
-    <a href="/editor" class="btn btn-primary btn-sm">+ Новая открытка</a>
-    <button class="btn btn-outline btn-sm" onclick="logout()">Выйти</button>
+    <a href="/editor" class="btn btn-primary btn-sm">➕ Новая открытка</a>
+    <button class="btn btn-outline btn-sm" onclick="logout()">❌ Выход</button>
   </div>
 </nav>
 
 <div class="container" style="padding-top:2rem;padding-bottom:3rem">
   <div class="flex items-center justify-between mb-2">
-    <h1 style="font-size:1.6rem;font-weight:700">Мои открытки</h1>
-    <a href="/editor" class="btn btn-primary">+ Создать</a>
+    <h1 style="font-size:1.6rem;font-weight:700">Мои пригласительные открытки</h1>
+    <a href="/editor" class="btn btn-primary">➕ Добавить</a>
   </div>
 
   <div id="cardsList">
@@ -28,7 +28,7 @@
   </div>
 </div>
 
-<!-- Модальное окно: QR + ссылка -->
+<!-- Модальное окно: QR + ссылка + поделиться -->
 <div class="modal-overlay hidden" id="shareModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('shareModal')">×</button>
@@ -38,9 +38,26 @@
       <p class="qr-url" id="inviteUrl"></p>
     </div>
     <div class="flex gap-1 mt-2">
+       <a id="downloadQr" class="btn btn-outline" download="qr.png">Скачать QR-код</a>
       <button class="btn btn-primary w-full" onclick="copyLink()">Скопировать ссылку</button>
-      <a id="downloadQr" class="btn btn-outline" download="qr.png">Скачать QR</a>
     </div>
+    <div style="margin-top:1.5rem;border-top:1px solid #eee;padding-top:1rem">
+      <p style="margin-bottom:0.75rem;font-weight:500;color:#555">📲 Отправить через:</p>
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+        <button onclick="shareModalWhatsApp()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#05cc41;color:#fff;font-weight:500">WhatsApp</button>
+        <button onclick="shareModalTelegram()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#29b1ff;color:#fff;font-weight:500">Telegram</button>
+        <button onclick="shareModalVK()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#0432ae;color:#fff;font-weight:500">VK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно: анкета гостя -->
+<div class="modal-overlay hidden" id="guestFormModal" style="z-index:1100">
+  <div class="modal" style="max-width:500px">
+    <button class="modal-close" onclick="closeModal('guestFormModal')">×</button>
+    <h2>📋 Анкета гостя</h2>
+    <div id="guestFormContent"></div>
   </div>
 </div>
 
@@ -90,11 +107,12 @@
           <span>${c.template_name || 'Без шаблона'} · ${c.guest_count} гостей · ${formatDate(c.created_at)}</span>
         </div>
         <div class="card-item-actions">
-          <a href="/invite/${c.slug}" target="_blank" class="btn btn-outline btn-sm">Просмотр</a>
-          <button class="btn btn-outline btn-sm" onclick="openShare('${c.slug}')">QR / Ссылка</button>
-          <button class="btn btn-outline btn-sm" onclick="openGuests('${c.slug}')">Гости</button>
-          <a href="/editor?slug=${c.slug}" class="btn btn-outline btn-sm">Редактировать</a>
-          <button class="btn btn-danger btn-sm" onclick="deleteCard('${c.slug}')">Удалить</button>
+          <a href="/invite/${c.slug}" target="_blank" class="btn btn-outline btn-sm">👁️‍🗨️ Открыть</a>
+          <button class="btn btn-outline btn-sm" onclick="openShare('${c.slug}')">✉️ Поделиться</button>
+          <a href="/rsvp-manager.html?slug=${c.slug}" class="btn btn-primary btn-sm">📊 RSVP</a>
+          <button class="btn btn-outline btn-sm" onclick="openGuests('${c.slug}')">👥 Гости</button>
+          <a href="/editor?slug=${c.slug}" class="btn btn-outline btn-sm">✏️ Редактировать</a>
+          <button class="btn btn-danger btn-sm" onclick="deleteCard('${c.slug}')">🗑️ Удалить</button>
         </div>
       </div>
     `).join('');
@@ -121,10 +139,9 @@
 
     let html = `
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-num">${stats.total}</div><div class="stat-label">Всего</div></div>
-        <div class="stat-card"><div class="stat-num">${stats.attending}</div><div class="stat-label">Придут</div></div>
-        <div class="stat-card"><div class="stat-num">${stats.not_attending}</div><div class="stat-label">Не придут</div></div>
-        <div class="stat-card"><div class="stat-num">${stats.minors}</div><div class="stat-label">Дети</div></div>
+        <div class="stat-card"><div class="stat-num">${stats.total}</div><div class="stat-label">📩 Всего ответов </div></div>
+        <div class="stat-card"><div class="stat-num">${stats.attending}</div><div class="stat-label">✅ Придут</div></div>
+        <div class="stat-card"><div class="stat-num">${stats.not_attending}</div><div class="stat-label">❌ Не придут</div></div>
       </div>`;
 
     if (!guests.length) {
@@ -132,16 +149,16 @@
     } else {
       html += `<div style="overflow-x:auto"><table class="guests-table">
         <thead><tr>
-          <th>ФИО</th><th>Статус</th><th>Ребёнок</th><th>Заметка</th><th></th>
+          <th>ФИО</th><th>Присутствие</th><th>Несовершеннолетний</th><th>Заметка</th><th></th>
         </tr></thead>
         <tbody>
           ${guests.map(g => `
-            <tr>
+            <tr style="cursor:pointer" onclick="openGuestForm(${JSON.stringify(g).replace(/"/g, '&quot;')})">
               <td>${escHtml(g.full_name)}</td>
               <td><span class="badge badge-${g.attending}">${attendingLabel(g.attending)}</span></td>
-              <td>${g.is_minor ? `Да (${g.minor_age || '?'} лет)` : '—'}</td>
+              <td>${g.is_minor ? `🔞 ${g.minor_age || '?'} лет` : '—'}</td>
               <td>${g.note ? escHtml(g.note) : '—'}</td>
-              <td><button class="btn btn-danger btn-sm" onclick="deleteGuest('${slug}', ${g.id})">×</button></td>
+              <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteGuest('${slug}', ${g.id})">️️️🗑️</button></td>
             </tr>`).join('')}
         </tbody>
       </table></div>`;
@@ -167,12 +184,42 @@
     navigator.clipboard.writeText(url).then(() => alert('Ссылка скопирована'));
   }
 
+  function shareModalWhatsApp() {
+    const url = document.getElementById('inviteUrl').textContent;
+    window.open(`https://wa.me/?text=${encodeURIComponent('Приглашаю вас! ' + url)}`, '_blank');
+  }
+
+  function shareModalTelegram() {
+    const url = document.getElementById('inviteUrl').textContent;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}`, '_blank');
+  }
+
+  function shareModalVK() {
+    const url = document.getElementById('inviteUrl').textContent;
+    window.open(`https://vk.com/share.php?url=${encodeURIComponent(url)}`, '_blank');
+  }
+
   function closeModal(id) {
     document.getElementById(id).classList.add('hidden');
   }
 
+  function openGuestForm(g) {
+    const statusMap = { yes: '✅ Придёт', no: '❌ Не придёт', maybe: '❓ Не знает' };
+    document.getElementById('guestFormContent').innerHTML = `
+      <table style="width:100%;border-collapse:collapse">
+        <tr><td style="padding:0.6rem 0;color:#888;width:40%">ФИО</td><td style="padding:0.6rem 0;font-weight:500">${escHtml(g.full_name)}</td></tr>
+        <tr><td style="padding:0.6rem 0;color:#888;border-top:1px solid #f0f0f0">Email</td><td style="padding:0.6rem 0;border-top:1px solid #f0f0f0">${g.email || '—'}</td></tr>
+        <tr><td style="padding:0.6rem 0;color:#888;border-top:1px solid #f0f0f0">Присутствие</td><td style="padding:0.6rem 0;border-top:1px solid #f0f0f0">${statusMap[g.attending] || g.attending}</td></tr>
+        <tr><td style="padding:0.6rem 0;color:#888;border-top:1px solid #f0f0f0">Несовершеннолетний</td><td style="padding:0.6rem 0;border-top:1px solid #f0f0f0">${g.is_minor ? `🔞 ${g.minor_age || '?'} лет` : '—'}</td></tr>
+        <tr><td style="padding:0.6rem 0;color:#888;border-top:1px solid #f0f0f0">Заметки</td><td style="padding:0.6rem 0;border-top:1px solid #f0f0f0">${g.note ? escHtml(g.note) : '—'}</td></tr>
+        <tr><td style="padding:0.6rem 0;color:#888;border-top:1px solid #f0f0f0">Дата ответа</td><td style="padding:0.6rem 0;border-top:1px solid #f0f0f0">${g.submitted_at ? new Date(g.submitted_at).toLocaleString('ru-RU') : '—'}</td></tr>
+      </table>
+    `;
+    document.getElementById('guestFormModal').classList.remove('hidden');
+  }
+
   function attendingLabel(v) {
-    return { yes: 'Придёт', no: 'Не придёт', maybe: 'Не знает' }[v] || v;
+    return { yes: '✅ Придёт', no: '❌ Не придёт', maybe: '❔ Не знает' }[v] || v;
   }
 
   function formatDate(str) {
