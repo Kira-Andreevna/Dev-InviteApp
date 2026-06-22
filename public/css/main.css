@@ -180,21 +180,34 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 1.5rem;
-  min-height: calc(100vh - 64px);
+  height: calc(100vh - 64px);
+  overflow: hidden;
 }
 .editor-sidebar {
   background: var(--surface);
   border-right: 1px solid var(--border);
   padding: 1.5rem;
   overflow-y: auto;
+  min-height: 0;
 }
 .editor-preview {
   padding: 1.5rem;
   overflow-y: auto;
+  min-height: 0;
 }
 
 @media (max-width: 900px) {
-  .editor-layout { grid-template-columns: 1fr; }
+  .editor-layout {
+    grid-template-columns: 1fr;
+    height: auto;
+    min-height: calc(100vh - 64px);
+    overflow: visible;
+  }
+  .editor-sidebar,
+  .editor-preview {
+    min-height: auto;
+    max-height: 50vh;
+  }
 }
 
 /* ===== Блоки редактора ===== */
