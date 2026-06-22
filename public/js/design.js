@@ -389,6 +389,7 @@ function applyTheme(themeId) {
   loadGoogleFonts();
   applyDesignToPreview();
   renderThemes();
+  scheduleDraftSave();
 }
 
 // ===== Дебаунс для слайдеров =====
@@ -416,11 +417,13 @@ function updateDesignDebounced(key, value) {
   if (key === 'fontHeading' || key === 'fontBody') {
     loadGoogleFonts();
     applyDesignToPreview();
+    scheduleDraftSave();
     return;
   }
 
   clearTimeout(_designTimer);
   _designTimer = setTimeout(() => applyDesignToPreview(), 80);
+  scheduleDraftSave();
 }
 
 // Алиас для вызовов из HTML
@@ -431,6 +434,7 @@ function updateDesign(key, value) {
 function toggleFontLock() {
   window.design.fontSizeLocked = !window.design.fontSizeLocked;
   updateLockBtn(window.design.fontSizeLocked);
+  scheduleDraftSave();
 }
 
 function updateLockBtn(locked) {
@@ -447,24 +451,28 @@ function selectDecoration(id) {
   window.design.decoration = id;
   renderDecorations();
   applyDesignToPreview();
+  scheduleDraftSave();
 }
 
 function selectBgPattern(id) {
   window.design.bgPattern = id;
   renderBgPatterns();
   applyDesignToPreview();
+  scheduleDraftSave();
 }
 
 function selectHeroStyle(id) {
   window.design.heroStyle = id;
   renderHeroStyles();
   applyDesignToPreview();
+  scheduleDraftSave();
 }
 
 function selectDividerStyle(id) {
   window.design.dividerStyle = id;
   renderDividerStyles();
   applyDesignToPreview();
+  scheduleDraftSave();
 }
 
 function selectBlockShadow(id) {
@@ -472,6 +480,7 @@ function selectBlockShadow(id) {
   renderBlockShadows();
   updateShadowColorVisibility(id);
   applyDesignToPreview();
+  scheduleDraftSave();
 }
 
 function updateShadowColorVisibility(shadowId) {
@@ -483,6 +492,7 @@ function selectAnimation(id) {
   window.design.animation = id;
   renderAnimations();
   applyDesignToPreview();
+  scheduleDraftSave();
 }
 
 // ===== Применение только CSS-переменных (без перерисовки блоков) =====
@@ -600,6 +610,7 @@ function setRadius(val) {
   setVal('dRadius', val);
   document.getElementById('dRadiusVal').textContent = radiusLabel(val);
   applyDesignToPreview();
+  scheduleDraftSave();
 }
 
 // ===== Глобальный макет =====
@@ -608,5 +619,6 @@ function setGlobalLayout(layout) {
   if (typeof blocks !== 'undefined') {
     blocks.forEach(b => { if (!b.layoutLocked) b.layout = layout; });
     if (typeof renderPreview === 'function') renderPreview();
+    scheduleDraftSave();
   }
 }
