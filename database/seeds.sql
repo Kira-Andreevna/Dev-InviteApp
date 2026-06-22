@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 USE invite_app;
 
 INSERT INTO templates (name, preview_img, structure_json) VALUES
