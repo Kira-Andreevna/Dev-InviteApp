@@ -157,7 +157,7 @@ function addDecorationOverlay(decoId) {
 function renderInvite(blocks) {
   const container = document.getElementById('inviteContent');
   container.innerHTML = blocks.map((block, i) => renderBlock(block, i)).join('');
-  // Запускаем анимацию появления
+  // Запускаем анимацию появленияЗ
   const anim = document.body.getAttribute('data-animation') || 'fade';
   if (anim !== 'none') initScrollAnimations(anim);
 }
