@@ -35,6 +35,8 @@ function applyDesign(d) {
   if (d.colorBlock)   root.style.setProperty('--inv-block-bg', d.colorBlock);
   else if (d.colorBg) root.style.setProperty('--inv-block-bg', d.colorBg);
   if (d.colorText)    root.style.setProperty('--inv-text', d.colorText);
+  if (d.colorHeading) root.style.setProperty('--inv-heading', d.colorHeading);
+  else if (d.colorPrimary) root.style.setProperty('--inv-heading', d.colorPrimary);
   if (d.colorHero1)   root.style.setProperty('--inv-hero1', d.colorHero1);
   if (d.colorHero2)   root.style.setProperty('--inv-hero2', d.colorHero2);
   if (d.fontHeading)  root.style.setProperty('--inv-font-h', d.fontHeading);
@@ -181,58 +183,59 @@ function renderBlock(block, i) {
   const animClass = 'inv-animate';
   const shadowClass = `inv-shadow--${shadow}`;
 
+  // Выравнивание текста по настройке блока
+  const isCentered = block.layout === 'centered';
+  const alignStyle    = isCentered ? 'text-align:center;' : '';
+  const flexCenter    = isCentered ? 'justify-content:center;text-align:center;' : '';
+
   switch (block.type) {
     case 'hero':
       return `<div class="inv-hero inv-hero--${heroStyle} ${animClass}">
         ${heroStyle === 'wave' ? '<div class="inv-hero-wave"></div>' : ''}
-        <h1>${escHtml(block.value || 'Вы приглашены!')}</h1>
-        ${block.subtitle ? `<p>${escHtml(block.subtitle)}</p>` : ''}
+        <h1 style="color:var(--inv-heading,var(--inv-primary))">${escHtml(block.value || 'Вы приглашены!')}</h1>
+        ${block.subtitle ? `<p style="color:var(--inv-heading,var(--inv-primary))">${escHtml(block.subtitle)}</p>` : ''}
       </div>`;
 
     case 'story':
-      return `${divider}<div class="inv-block ${animClass} ${shadowClass}">
-        <h2>Наша история</h2>
+      return `${divider}<div class="inv-block ${animClass} ${shadowClass}" style="${alignStyle}">
         <p>${escHtml(block.value || '')}</p>
       </div>`;
 
     case 'details':
-      return `${divider}<div class="inv-block ${animClass} ${shadowClass}">
-        <h2> ${escHtml(block.label || 'Детали')}</h2>
+      return `${divider}<div class="inv-block ${animClass} ${shadowClass}" style="${alignStyle}">
         <p>${escHtml(block.value || '')}</p>
       </div>`;
 
     case 'wishes':
-      return `${divider}<div class="inv-block ${animClass} ${shadowClass}">
-        <h2>Пожелания</h2>
-        <p>${escHtml(block.value || '')}</p>
+      return `${divider}<div class="inv-block ${animClass} ${shadowClass}" style="${alignStyle}">
+        <p style="font-weight:bold;font-style:italic">${escHtml(block.value || '')}</p>
       </div>`;
 
     case 'date':
-      return `${divider}<div class="inv-date ${animClass} ${shadowClass}">
-        <div class="inv-date-info">
-          <div class="date-val">${block.value ? formatDate(block.value) : 'Дата уточняется'}</div>
+      return `${divider}<div class="inv-date ${animClass} ${shadowClass}" style="${flexCenter}">
+        <div class="inv-date-info" style="flex:1;${alignStyle}">
+          <div class="date-val" style="font-weight:bold;font-style:italic;${alignStyle}display:block;">${block.value ? formatDate(block.value) : 'Дата уточняется'}</div>
         </div>
       </div>`;
 
     case 'event-time':
-      return `${divider}<div class="inv-date ${animClass} ${shadowClass}">
-        <div class="inv-date-info">
-          <div class="date-val">${block.time || 'Время уточняется'}</div>
+      return `${divider}<div class="inv-date ${animClass} ${shadowClass}" style="${flexCenter}">
+        <div class="inv-date-info" style="flex:1;${alignStyle}">
+          <div class="date-val" style="font-weight:bold;font-style:italic;${alignStyle}display:block;">${block.time || 'Время уточняется'}</div>
         </div>
       </div>`;
 
     case 'event-place':
-      return `${divider}<div class="inv-date ${animClass} ${shadowClass}">
-        <div class="inv-date-info">
-          <div class="date-val">${block.place ? escHtml(block.place) : 'Место уточняется'}</div>
+      return `${divider}<div class="inv-date ${animClass} ${shadowClass}" style="${flexCenter}">
+        <div class="inv-date-info" style="flex:1;${alignStyle}">
+          <div class="date-val" style="font-weight:bold;font-style:italic;${alignStyle}display:block;">${block.place ? escHtml(block.place) : 'Место уточняется'}</div>
         </div>
       </div>`;
 
     case 'palette':
       if (!block.colors || !block.colors.length) return '';
       return `${divider}<div class="inv-palette ${animClass} ${shadowClass}">
-        <h2>Цветовая палитра мероприятия</h2>
-        <div class="color-palette">
+        <div class="color-palette" style="${isCentered ? 'justify-content:center;' : ''}">
           ${block.colors.map(c => `<div class="color-swatch" style="background:${c}" title="${c}"></div>`).join('')}
         </div>
       </div>`;
@@ -240,8 +243,7 @@ function renderBlock(block, i) {
     case 'gallery':
       if (!block.files || !block.files.length) return '';
       return `${divider}<div class="inv-gallery ${animClass} ${shadowClass}">
-        <h2>Фотогалерея</h2>
-        <div class="inv-gallery-grid">
+        <div class="inv-gallery-grid${isCentered ? ' inv-gallery-grid--centered' : ''}">
           ${block.files.map(f => `<img src="${f}" alt="фото" onclick="openLightbox('${f}')">`).join('')}
         </div>
       </div>`;
@@ -250,7 +252,6 @@ function renderBlock(block, i) {
       if (!block.value) return '';
       const isYT = block.value.includes('youtube') || block.value.includes('youtu.be');
       return `${divider}<div class="inv-block ${animClass} ${shadowClass}">
-        <h2>Видео</h2>
         ${isYT
           ? `<iframe width="100%" height="280" src="${ytEmbed(block.value)}" frameborder="0" allowfullscreen style="border-radius:var(--inv-radius)"></iframe>`
           : `<video src="${block.value}" controls style="width:100%;border-radius:var(--inv-radius)"></video>`}

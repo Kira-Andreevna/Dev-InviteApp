@@ -4,11 +4,20 @@ const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
 
+// Хелпер: извлечь дату мероприятия из content_json
+function extractEventDate(content_json) {
+  try {
+    const content = typeof content_json === 'string' ? JSON.parse(content_json) : content_json;
+    const dateBlock = (content.blocks || []).find(b => b.type === 'date');
+    return dateBlock?.value || null;
+  } catch { return null; }
+}
+
 // GET /api/cards — все открытки пользователя
 async function getMyCards(req, res) {
   try {
     const [rows] = await db.query(
-      `SELECT c.id, c.slug, c.title, c.created_at, c.is_published,
+      `SELECT c.id, c.slug, c.title, c.created_at, c.is_published, c.event_date, c.content_json,
               t.name AS template_name,
               (SELECT COUNT(*) FROM guests g WHERE g.card_id = c.id) AS guest_count
        FROM cards c
@@ -17,6 +26,27 @@ async function getMyCards(req, res) {
        ORDER BY c.created_at DESC`,
       [req.session.userId]
     );
+
+    // Авто-синхронизация event_date из content_json для открыток без даты
+    for (const row of rows) {
+      if (!row.event_date) {
+        try {
+          const content = typeof row.content_json === 'string' ? JSON.parse(row.content_json) : row.content_json;
+          const dateBlock = (content?.blocks || []).find(b => b.type === 'date');
+          if (dateBlock?.value) {
+            await db.query('UPDATE cards SET event_date = ? WHERE id = ?', [dateBlock.value, row.id]);
+            row.event_date = dateBlock.value;
+          }
+        } catch (e) { /* ignore */ }
+      }
+      // Извлекаем eventType для карточки дашборда — всегда
+      try {
+        const content = typeof row.content_json === 'string' ? JSON.parse(row.content_json) : (row.content_json || {});
+        row.event_type = content.eventType || '';
+      } catch (e) { row.event_type = ''; }
+      delete row.content_json;
+    }
+
     res.json(rows);
   } catch (err) {
     console.error(err);
@@ -61,11 +91,12 @@ async function createCard(req, res) {
     return res.status(400).json({ error: 'Укажите заголовок и содержимое' });
 
   const slug = uuidv4().replace(/-/g, '').substring(0, 12);
+  const eventDate = extractEventDate(content_json);
 
   try {
     const [result] = await db.query(
-      'INSERT INTO cards (user_id, slug, title, template_id, content_json) VALUES (?, ?, ?, ?, ?)',
-      [req.session.userId, slug, title, template_id || null, JSON.stringify(content_json)]
+      'INSERT INTO cards (user_id, slug, title, template_id, content_json, event_date) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.session.userId, slug, title, template_id || null, JSON.stringify(content_json), eventDate]
     );
     res.json({ success: true, slug, id: result.insertId });
   } catch (err) {
@@ -98,11 +129,21 @@ async function updateCard(req, res) {
       [cardId, maxVersion + 1, title, JSON.stringify(content_json)]
     );
 
+    const eventDate = extractEventDate(content_json);
+
     // Обновляем текущую открытку
-    await db.query(
-      'UPDATE cards SET title = ?, content_json = ?, is_published = ? WHERE slug = ?',
-      [title, JSON.stringify(content_json), is_published ?? 1, req.params.slug]
-    );
+    // event_date: если в блоке есть дата — всегда синхронизируем; если блока нет — не трогаем
+    if (eventDate !== null) {
+      await db.query(
+        'UPDATE cards SET title = ?, content_json = ?, is_published = ?, event_date = ? WHERE slug = ?',
+        [title, JSON.stringify(content_json), is_published ?? 1, eventDate, req.params.slug]
+      );
+    } else {
+      await db.query(
+        'UPDATE cards SET title = ?, content_json = ?, is_published = ? WHERE slug = ?',
+        [title, JSON.stringify(content_json), is_published ?? 1, req.params.slug]
+      );
+    }
 
     res.json({ success: true, version: maxVersion + 1 });
   } catch (err) {

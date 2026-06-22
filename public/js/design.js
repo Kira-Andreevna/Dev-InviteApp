@@ -5,6 +5,7 @@ const DEFAULT_DESIGN = {
   colorBg:      '#ffffff',
   colorBlock:   '#ffffff',
   colorText:    '#2d2d2d',
+  colorHeading: '#ffffff',
   colorHero1:   '#7c5cbf',
   colorHero2:   '#f4a261',
   fontHeading:  "'Segoe UI', sans-serif",
@@ -302,6 +303,7 @@ function syncDesignControls() {
   setVal('dColorBg',      d.colorBg);
   setVal('dColorBlock',   d.colorBlock || d.colorBg);
   setVal('dColorText',    d.colorText);
+  setVal('dColorHeading', d.colorHeading || '#ffffff');
   setVal('dColorHero1',   d.colorHero1);
   setVal('dColorHero2',   d.colorHero2);
   setVal('dFontHeading',  d.fontHeading);
@@ -381,6 +383,8 @@ function applyTheme(themeId) {
   Object.assign(window.design, theme.colors, theme.fonts, { _theme: themeId });
   // colorBlock следует за colorBg при смене темы
   window.design.colorBlock = theme.colors.colorBg;
+  // colorHeading следует за colorPrimary при смене темы (белый — для hero на цветном фоне)
+  window.design.colorHeading = '#ffffff';
   syncDesignControls();
   loadGoogleFonts();
   applyDesignToPreview();
@@ -495,6 +499,7 @@ function applyDesignVars() {
   preview.style.setProperty('--inv-bg',       d.colorBg);
   preview.style.setProperty('--inv-block-bg', d.colorBlock || d.colorBg);
   preview.style.setProperty('--inv-text',     d.colorText);
+  preview.style.setProperty('--inv-heading',  d.colorHeading || d.colorPrimary);
   preview.style.setProperty('--inv-hero1',    d.colorHero1);
   preview.style.setProperty('--inv-hero2',    d.colorHero2);
   preview.style.setProperty('--inv-font-h',   d.fontHeading);

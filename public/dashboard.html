@@ -1,29 +1,229 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Мои открытки — InviteCard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/landing.css">
+  <style>
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      min-height: 100vh;
+      background-image: url('/bg-dashboard.png');
+      background-size: cover;
+      background-position: center top;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      background-color: #fdf0f4;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        background-attachment: scroll;
+        background-position: center center;
+      }
+    }
+
+    /* ===== Шапка страницы ===== */
+    .dash-header {
+      padding: 2.5rem 0 1rem;
+      position: relative; z-index: 1;
+    }
+    .dash-header h1 {
+      font-size: 3rem;
+      font-family: 'Playfair Display';
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 1.2rem;
+    }
+    .dash-header p {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      max-width: 480px;
+      margin-bottom: 0.5rem;
+      line-height: 1.7;
+    }
+
+    /* ===== Flip-карточки ===== */
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(24px) rotate(-15deg) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) rotate(-15deg) scale(1); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .card-flip-wrap {
+      perspective: 1200px;
+      height: 380px;
+      animation: cardIn 0.5s ease both;
+    }
+    .card-flip-inner {
+      position: relative; width: 100%; height: 100%;
+      transform-style: preserve-3d;
+      transform: rotate(15deg);
+      transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+    }
+    /* При наведении — выпрямляется */
+    .card-flip-wrap:not(.flipped):hover .card-flip-inner {
+      transform: rotate(10deg) translateY(-6px);
+    }
+    /* Перевёрнутая карточка — без наклона */
+    .card-flip-wrap.flipped .card-flip-inner {
+      transform: rotateY(180deg) rotate(-10deg);
+    }
+
+    .card-face, .card-back {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      border-radius: 24px;
+      overflow: hidden;
+    }
+
+    /* Лицевая сторона */
+    .card-face {
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255,255,255,0.75);
+      box-shadow: 0 8px 32px rgba(232,25,44,0.12), 0 2px 8px rgba(0,0,0,0.06);
+      padding: 1.8rem 1.6rem 1.5rem;
+      display: flex; flex-direction: column;
+      text-align: center;
+      transition: box-shadow 0.3s;
+    }
+    .card-flip-wrap:not(.flipped):hover .card-face {
+      box-shadow: 0 16px 48px rgba(232,25,44,0.18), 0 4px 12px rgba(0,0,0,0.08);
+    }
+    /* Мерцающая полоска сверху */
+    .card-face::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #f2a7b8, #fae5f1, #e8192c, #ffffff, #f2a7b8);
+      background-size: 300% 100%;
+      animation: shimmer 4.5s linear infinite;
+    }
+    /* Свечение снизу */
+    /* .card-face::after {
+      content: '';
+      position: absolute; bottom: 5px; left: -40px; 
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(232,25,44,0.1), transparent 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    } */
+
+    /* Оборотная сторона */
+    .card-back {
+      transform: rotateY(180deg);
+      background: #fff;
+      border: 1px solid rgba(232,160,180,0.3);
+      box-shadow: 0 8px 32px rgba(232,25,44,0.12);
+      padding: 1.4rem 1.2rem 1rem;
+      display: flex; flex-direction: column; gap: 0.3rem;
+    }
+    .card-back::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #e8192c, #f8d1da, #e8192c);
+      background-size: 300% 100%;
+      animation: shimmer 7.5s linear infinite;
+    }
+    .card-back-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem; font-weight: 700; 
+      color: #2d2020; margin-bottom: 0.8rem;
+      text-align: center; line-height:1.5;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    /* Кнопки оборотной стороны */
+    .card-action {
+      display: flex; align-items: center; gap: 0.7rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 14px;
+      font-size: 0.85rem; font-weight: 500; color: #2d2020;
+      text-decoration: none;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid rgba(232,160,180,0.18);
+      cursor: pointer; width: 100%;
+      transition: color 0.18s, padding-left 0.2s;
+      margin-bottom: 0;
+    }
+    .card-action:hover {
+      color: #c9748a;
+      background: rgba(232,160,180,0.15);
+      border-color: #e8a0b4;
+      box-shadow: 0 8px 15px rgba(232,25,44,0.14);
+      transform: translateX(10px);
+      text-decoration: none;
+    }
+    .card-action:last-of-type { margin-bottom: 0; }
+
+    .card-action.danger {
+      background: #ededed; 
+      border-color:#757575; 
+      color: #fff;
+      font-weight: 700;
+      border-bottom: none;
+      margin-top: 1.25rem;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .card-action.danger::before { display: none; }
+    .card-action.danger:hover {
+      color: #fff;
+      background: #757575;
+      padding-left: 1.1rem;
+    }
+    .card-back-close {
+      margin-top: auto; padding-top: 0.5rem;
+      text-align: center; font-size: 1rem;
+      color: #c9748a; cursor: pointer; font-weight: 600;
+      letter-spacing: 0.04em; border-top: 1px solid rgba(232,160,180,0.2);
+    }
+    .card-back-close:hover { color: #ff0019; }
+
+    /* Модальное окно гостей */
+    #guestsModal .modal { max-width: 960px; width: 96vw; border-radius: 20px; overflow: visible; max-height: none; }
+    #guestsModal .modal h2 { font-family: 'Playfair Display', serif; color: #2d2020; margin-bottom: 1rem; }
+    #guestsModal thead tr th { position: sticky; top: 0; z-index: 2; }
+  </style>
 </head>
 <body>
 
 <nav class="navbar">
-  <a class="navbar-brand" href="/">💌 <span>InviteCard</span></a>
+  <a class="navbar-brand" href="/">
+    <span class="brand-icon">💌</span>
+    <span class="brand-name">InviteCard</span>
+  </a>
   <div class="navbar-nav">
-    <span id="userName" style="color:var(--text-muted);font-size:0.9rem"></span>
-    <a href="/editor" class="btn btn-primary btn-sm">➕ Новая открытка</a>
-    <button class="btn btn-outline btn-sm" onclick="logout()">❌ Выход</button>
+    <span id="userName" class="nav-greeting"></span>
+    <a href="/editor" class="btn btn-hero-primary btn-sm">+ Новая открытка</a>
+    <button class="btn btn-hero-outline btn-sm" onclick="logout()"> ✖ Выйти</button>
   </div>
 </nav>
 
-<div class="container" style="padding-top:2rem;padding-bottom:3rem">
-  <div class="flex items-center justify-between mb-2">
-    <h1 style="font-size:1.6rem;font-weight:700">Мои пригласительные открытки</h1>
-    <a href="/editor" class="btn btn-primary">➕ Добавить</a>
+<div class="container" style="padding-bottom:3rem;position:relative">
+
+  <!-- Декоративная шапка -->
+  <div class="dash-header">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1>Мои открытки</h1>
+        <p id="cardsSubtitle"></p>
+      </div>
+      <a href="/editor" class="btn btn-hero-primary">+ Добавить</a>
+    </div>
   </div>
 
-  <div id="cardsList">
+  <div id="cardsList" style="position:relative;z-index:1">
     <div class="spinner"></div>
   </div>
 </div>
@@ -32,21 +232,21 @@
 <div class="modal-overlay hidden" id="shareModal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('shareModal')">×</button>
-    <h2>Поделиться приглашением</h2>
+    <h2 style="font-family: 'Playfair Display', Georgia, serif">Поделиться приглашением</h2>
     <div class="qr-container">
       <img id="qrImg" src="" alt="QR-код">
       <p class="qr-url" id="inviteUrl"></p>
     </div>
-    <div class="flex gap-1 mt-2">
-       <a id="downloadQr" class="btn btn-outline" download="qr.png">Скачать QR-код</a>
-      <button class="btn btn-primary w-full" onclick="copyLink()">Скопировать ссылку</button>
+    <div class="flex gap-1 mt-2" style="display: flex">
+       <a id="downloadQr" class="btn btn-outline" download="qr.png" style="flex: 0.9; text-align: center">Скачать QR-код</a>
+      <button class="btn btn-primary w-full" onclick="copyLink()" style="flex: 1.1; text-align: center">Скопировать ссылку</button>
     </div>
     <div style="margin-top:1.5rem;border-top:1px solid #eee;padding-top:1rem">
-      <p style="margin-bottom:0.75rem;font-weight:500;color:#555">📲 Отправить через:</p>
-      <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
-        <button onclick="shareModalWhatsApp()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#05cc41;color:#fff;font-weight:500">WhatsApp</button>
-        <button onclick="shareModalTelegram()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#29b1ff;color:#fff;font-weight:500">Telegram</button>
-        <button onclick="shareModalVK()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#0432ae;color:#fff;font-weight:500">VK</button>
+      <p style="margin-bottom:0.75rem;font-weight:500;color:#555; text-align: center">📲 Отправить через:</p>
+      <div style="gap:0.75rem; text-align: center">
+        <button onclick="shareModalTelegram()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#29b1ff;color:#fff;font-weight:500; text-align: center">Telegram</button>
+        <button onclick="shareModalWhatsApp()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#05cc41;color:#fff;font-weight:500; text-align: center">WhatsApp</button>
+        <button onclick="shareModalVK()" style="padding:0.6rem 1.2rem;border:none;border-radius:8px;cursor:pointer;background:#0432ae;color:#fff;font-weight:500; text-align: center">VK</button>
       </div>
     </div>
   </div>
@@ -54,9 +254,9 @@
 
 <!-- Модальное окно: анкета гостя -->
 <div class="modal-overlay hidden" id="guestFormModal" style="z-index:1100">
-  <div class="modal" style="max-width:500px">
+  <div class="modal" style="max-width:550px">
     <button class="modal-close" onclick="closeModal('guestFormModal')">×</button>
-    <h2>📋 Анкета гостя</h2>
+    <h2 style="font-family: 'Playfair Display', Georgia, serif">📋 Анкета гостя</h2>
     <div id="guestFormContent"></div>
   </div>
 </div>
@@ -65,7 +265,7 @@
 <div class="modal-overlay hidden" id="guestsModal">
   <div class="modal" style="max-width:700px">
     <button class="modal-close" onclick="closeModal('guestsModal')">×</button>
-    <h2>Список гостей</h2>
+    <h2 style="font-family: 'Playfair Display', Georgia, serif">Список гостей</h2>
     <div id="guestsContent"><div class="spinner"></div></div>
   </div>
 </div>
@@ -95,27 +295,90 @@
           <div style="font-size:3rem;margin-bottom:1rem">✉️</div>
           <h3>Пока нет открыток</h3>
           <p class="text-muted mt-1">Создайте первую пригласительную открытку</p>
-          <a href="/editor" class="btn btn-primary mt-2">Создать открытку</a>
+          <a href="/editor" class="btn btn-hero-primary mt-2">Создать открытку</a>
         </div>`;
       return;
     }
 
-    container.innerHTML = cards.map(c => `
-      <div class="card-item mt-1">
-        <div class="card-item-info">
-          <h3>${escHtml(c.title)}</h3>
-          <span>${c.template_name || 'Без шаблона'} · ${c.guest_count} гостей · ${formatDate(c.created_at)}</span>
-        </div>
-        <div class="card-item-actions">
-          <a href="/invite/${c.slug}" target="_blank" class="btn btn-outline btn-sm">👁️‍🗨️ Открыть</a>
-          <button class="btn btn-outline btn-sm" onclick="openShare('${c.slug}')">✉️ Поделиться</button>
-          <a href="/rsvp-manager.html?slug=${c.slug}" class="btn btn-primary btn-sm">📊 RSVP</a>
-          <button class="btn btn-outline btn-sm" onclick="openGuests('${c.slug}')">👥 Гости</button>
-          <a href="/editor?slug=${c.slug}" class="btn btn-outline btn-sm">✏️ Редактировать</a>
-          <button class="btn btn-danger btn-sm" onclick="deleteCard('${c.slug}')">🗑️ Удалить</button>
-        </div>
-      </div>
-    `).join('');
+    // Подзаголовок
+    const total = cards.reduce((s, c) => s + c.guest_count, 0);
+    document.getElementById('cardsSubtitle').textContent =
+      `${cards.length} ${cards.length === 1 ? 'открытка' : cards.length <= 4 ? 'открытки' : 'открыток'} · ${total} ${total === 1 ? 'гость' : total <= 4 ? 'гостя' : 'гостей'} всего`;
+
+    container.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:2.5rem;padding-top:1.5rem">` +
+      cards.map((c, idx) => {
+        const templateIcon = c.template_name === 'Свадьба' ? '💍' : c.template_name === 'День рождения' ? '🎂' : '🎉';
+        // Тип: шаблон > eventType из редактора > пусто
+        const templateLabel = c.template_name || c.event_type || '';
+        const guestWord = c.guest_count === 1 ? 'гость' : c.guest_count >= 2 && c.guest_count <= 4 ? 'гостя' : 'гостей';
+        const flipId = `flip-${c.slug}`;
+        // Авто-размер заголовка: длинный → меньше
+        const titleLen = (c.title || '').length;
+        const titleSize = titleLen > 40 ? '0.95rem' : titleLen > 28 ? '1.1rem' : titleLen > 18 ? '1.25rem' : '1.5rem';
+        return `
+        <div class="card-flip-wrap" id="${flipId}" style="animation-delay:${idx * 0.09}s">
+          <div class="card-flip-inner">
+
+            <!-- ЛИЦЕВАЯ СТОРОНА -->
+            <div class="card-face">
+              <!-- Тег шаблона -->
+              <div style="font-size:0.85rem;font-weight:500;color:#c9748a;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:1.4rem">
+                ${templateIcon}${templateLabel ? ' ' + templateLabel : ''}
+              </div>
+
+              <!-- Название — авто-уменьшение шрифта -->
+              <div style="font-family:'Playfair Display',serif;font-size:${titleSize};font-weight:700;color:#2d2020;line-height:1.3;margin-bottom:0.7rem;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;word-break:break-word">
+                ${escHtml(c.title)}
+              </div>
+
+              <!-- Дата мероприятия -->
+              <div style="font-size:1rem;color:#c9a96e;font-weight:500;margin-bottom:0.9rem">
+                ${c.event_date ? formatDate(c.event_date) : ''}
+              </div>
+
+              <!-- Разделитель как на лендинге -->
+              <div style="width:36px;height:2px;background:linear-gradient(90deg,#e8a0b4,#e8192c);border-radius:2px;margin:0 auto 1rem"></div>
+
+              <!-- Счётчик гостей -->
+              <div style="font-size:1rem;color:#b8a0a8;margin-bottom:1.5rem">
+                ${c.guest_count} ${guestWord}
+              </div>
+
+              <!-- Последние изменения -->
+              <div style="font-size:0.85rem;color:#b8a0a8;margin-bottom:1.2rem">
+                Последние изменения<br>${formatDateTime(c.created_at)}
+              </div>
+
+              <!-- Кнопки внизу -->
+              <div style="margin-top:auto;display:flex;gap:0.5rem">
+                <button onclick="openShare('${c.slug}')"
+                  style="flex:1;padding:0.55rem;border-radius:50px;border:1.5px solid rgba(232,160,180,0.45);background:transparent;color:#c9748a;font-size:1rem;font-weight:600;cursor:pointer;transition:all 0.2s"
+                  onmouseover="this.style.background='rgba(232,160,180,0.12)';this.style.borderColor='#e8a0b4'"
+                  onmouseout="this.style.background='transparent';this.style.borderColor='rgba(232,160,180,0.45)'">
+                  ✉️ Поделиться
+                </button>
+                <button onclick="flipCard('${flipId}')"
+                  style="width:38px;height:38px;border-radius:50%;border:1.5px solid rgba(232,160,180,0.45);background:transparent;color:#9a7a82;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0"
+                  onmouseover="this.style.background='rgba(232,25,44,0.08)';this.style.color='#e8192c';this.style.borderColor='#e8a0b4'"
+                  onmouseout="this.style.background='transparent';this.style.color='#9a7a82';this.style.borderColor='rgba(232,160,180,0.45)'"
+                  title="Действия">···</button>
+              </div>
+            </div>
+
+            <!-- ОБОРОТНАЯ СТОРОНА -->
+            <div class="card-back">
+              <div class="card-back-title">${escHtml(c.title)}</div>
+              <a href="/invite/${c.slug}" target="_blank" class="card-action" style="font-size:0.85rem; color:#b8a0a8; font-weight:400">👁 Открыть приглашение</a>
+              <a href="/editor?slug=${c.slug}" class="card-action" style="font-size:0.85rem; color:#b8a0a8; font-weight:400">✏️ Редактировать</a>
+              <button onclick="openGuests('${c.slug}')" class="card-action" style="font-size:0.85rem; color:#b8a0a8; font-weight:400">👥 Список гостей</button>
+              <a href="/rsvp-manager.html?slug=${c.slug}" class="card-action" style="font-size:0.85rem; color:#b8a0a8; font-weight:400">📊 RSVP-отчётность</a>
+              <button onclick="deleteCard('${c.slug}')" class="card-action danger" style="text-align: center; font-weight: 700;">🗑️ Удалить открытку</button>
+              <div class="card-back-close" onclick="flipCard('${flipId}')">↩ Вернуться</div>
+            </div>
+
+          </div>
+        </div>`;
+      }).join('') + `</div>`;
   }
 
   async function openShare(slug) {
@@ -138,8 +401,8 @@
     const { guests, stats } = data;
 
     let html = `
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-num">${stats.total}</div><div class="stat-label">📩 Всего ответов </div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+        <div class="stat-card"><div class="stat-num">${stats.total}</div><div class="stat-label">📩 Всего ответов</div></div>
         <div class="stat-card"><div class="stat-num">${stats.attending}</div><div class="stat-label">✅ Придут</div></div>
         <div class="stat-card"><div class="stat-num">${stats.not_attending}</div><div class="stat-label">❌ Не придут</div></div>
       </div>`;
@@ -147,21 +410,38 @@
     if (!guests.length) {
       html += '<p class="text-muted text-center">Анкеты ещё не заполнены</p>';
     } else {
-      html += `<div style="overflow-x:auto"><table class="guests-table">
-        <thead><tr>
-          <th>ФИО</th><th>Присутствие</th><th>Несовершеннолетний</th><th>Заметка</th><th></th>
-        </tr></thead>
-        <tbody>
-          ${guests.map(g => `
-            <tr style="cursor:pointer" onclick="openGuestForm(${JSON.stringify(g).replace(/"/g, '&quot;')})">
-              <td>${escHtml(g.full_name)}</td>
-              <td><span class="badge badge-${g.attending}">${attendingLabel(g.attending)}</span></td>
-              <td>${g.is_minor ? `🔞 ${g.minor_age || '?'} лет` : '—'}</td>
-              <td>${g.note ? escHtml(g.note) : '—'}</td>
-              <td><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteGuest('${slug}', ${g.id})">️️️🗑️</button></td>
-            </tr>`).join('')}
-        </tbody>
-      </table></div>`;
+      html += `<div style="border-radius:12px;border:1px solid #f0dde3;overflow:hidden">
+        <div style="max-height:380px;overflow-y:auto;overflow-x:hidden">
+          <table style="width:100%;border-collapse:collapse;font-size:0.9rem;table-layout:fixed">
+            <colgroup>
+              <col style="width:40%">
+              <col style="width:23%">
+              <col style="width:27%">
+              <col style="width:10%">
+            </colgroup>
+            <thead>
+              <tr style="position:sticky;top:0;z-index:2;background:#fdf6f8">
+                <th style="padding:0.75rem 1rem;text-align:left;font-weight:600;border-bottom:2px solid #f0dde3">ФИО</th>
+                <th style="padding:0.75rem 0.75rem;text-align:center;font-weight:600;border-bottom:2px solid #f0dde3">Присутствие</th>
+                <th style="padding:0.75rem 0.75rem;text-align:center;font-weight:600;border-bottom:2px solid #f0dde3">Несовершеннолетний</th>
+                <th style="padding:0.75rem 0.5rem;border-bottom:2px solid #f0dde3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${guests.map(g => `
+                <tr style="cursor:pointer;transition:background 0.15s"
+                  onclick="openGuestForm(${JSON.stringify(g).replace(/"/g, '&quot;')})"
+                  onmouseover="this.style.background='rgba(232,160,180,0.08)'"
+                  onmouseout="this.style.background=''">
+                  <td style="padding:0.75rem 1rem;border-bottom:1px solid #f0dde3;word-break:break-word">${escHtml(g.full_name)}</td>
+                  <td style="padding:0.75rem 0.75rem;border-bottom:1px solid #f0dde3"><span class="badge badge-${g.attending}">${attendingLabel(g.attending)}</span></td>
+                  <td style="padding:0.75rem 0.75rem;border-bottom:1px solid #f0dde3;text-align:center">${g.is_minor ? `🔞 ${g.minor_age || '?'} лет` : '—'}</td>
+                  <td style="padding:0.75rem 0.5rem;border-bottom:1px solid #f0dde3;text-align:center"><button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteGuest('${slug}', ${g.id})">🗑️</button></td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
     }
 
     document.getElementById('guestsContent').innerHTML = html;
@@ -204,7 +484,7 @@
   }
 
   function openGuestForm(g) {
-    const statusMap = { yes: '✅ Придёт', no: '❌ Не придёт', maybe: '❓ Не знает' };
+    const statusMap = { yes: '✅ Придёт', no: '❌ Не придёт', maybe: '❔ Не знает' };
     document.getElementById('guestFormContent').innerHTML = `
       <table style="width:100%;border-collapse:collapse">
         <tr><td style="padding:0.6rem 0;color:#888;width:40%">ФИО</td><td style="padding:0.6rem 0;font-weight:500">${escHtml(g.full_name)}</td></tr>
@@ -226,9 +506,23 @@
     return new Date(str).toLocaleDateString('ru-RU');
   }
 
+  function formatDateTime(str) {
+    const d = new Date(str);
+    return d.toLocaleDateString('ru-RU') + ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+  }
+
   function escHtml(str) {
     return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  // ===== Flip-карточки =====
+  function flipCard(id) {
+    document.getElementById(id).classList.toggle('flipped');
   }
 </script>
 </body>
 </html>
+
+
+
+

@@ -18,10 +18,11 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
   fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif|webp|mp4|mov/;
-    cb(null, allowed.test(path.extname(file.originalname).toLowerCase()));
+    const ext = path.extname(file.originalname).toLowerCase().replace('.', '');
+    const allowed = ['jpeg', 'jpg', 'png', 'gif', 'webp', 'mp4', 'mov', 'webm'];
+    cb(null, allowed.includes(ext));
   }
 });
 
@@ -36,9 +37,16 @@ router.get('/:slug/guests', requireAuthApi, getGuests);
 router.delete('/:slug/guests/:guestId', requireAuthApi, deleteGuest);
 
 // Загрузка медиафайлов
-router.post('/:slug/upload', requireAuthApi, upload.single('file'), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'Файл не загружен' });
-  res.json({ url: `/uploads/${req.file.filename}` });
+router.post('/:slug/upload', requireAuthApi, (req, res, next) => {
+  upload.single('file')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') return res.status(400).json({ error: 'Файл слишком большой (макс. 50MB)' });
+      return res.status(400).json({ error: err.message });
+    }
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'Недопустимый формат файла. Разрешены: jpg, png, gif, webp, mp4, mov, webm' });
+    res.json({ url: `/uploads/${req.file.filename}` });
+  });
 });
 
 module.exports = router;

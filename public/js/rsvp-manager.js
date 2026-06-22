@@ -39,8 +39,6 @@ async function loadRsvpData() {
     const data = await res.json();
     cardData = { ...data.card, stats: data.stats };
 
-    document.getElementById('cardTitle').textContent = `Расширенная RSVP-отчётность: ${data.card.title}`;
-
     document.getElementById('statTotal').textContent = data.stats.total;
     document.getElementById('statYes').textContent = data.stats.attending;
     document.getElementById('statNo').textContent = data.stats.not_attending;
@@ -106,9 +104,23 @@ function fillSettingsForm(card) {
   form.notify_email.value      = card.notify_email      || '';
   form.notify_tg_chat_id.value = card.notify_tg_chat_id || '';
   form.tg_bot_token.value      = card.tg_bot_token      || '';
-  form.event_date.value        = card.event_date        || '';
   form.reminder_days.value     = card.reminder_days     || 3;
   form.reminder_time.value     = card.reminder_time     || '10:00';
+
+  // Дата: приоритет — event_date из БД, иначе берём из блока date в content_json
+  let eventDate = card.event_date ? String(card.event_date).split('T')[0] : '';
+  if (!eventDate) {
+    try {
+      const content = typeof card.content_json === 'string' ? JSON.parse(card.content_json) : (card.content_json || {});
+      const dateBlock = (content.blocks || []).find(b => b.type === 'date');
+      if (dateBlock?.value) eventDate = dateBlock.value;
+    } catch (e) {}
+  }
+  form.event_date.value = eventDate;
+
+  // Показываем подсказку если дата взята из открытки
+  const hint = document.getElementById('eventDateHint');
+  if (hint) hint.textContent = eventDate ? `Дата синхронизирована с блоком даты в открытке` : '';
 }
 
 // Сохранение настроек
@@ -126,7 +138,12 @@ function setupSettingsForm() {
       });
       
       if (!res.ok) throw new Error('Ошибка сохранения');
-      alert('✅ Настройки сохранены');
+      const result = await res.json();
+      if (result.dateChanged) {
+        alert('✅ Настройки сохранены.\n\n⚠️ Дата мероприятия изменена — она также обновлена в самом пригласительном.');
+      } else {
+        alert('✅ Настройки сохранены');
+      }
     } catch (err) {
       alert('Ошибка: ' + err.message);
     }
@@ -278,7 +295,7 @@ function openGuestModal(g) {
       ${row('Email', g.email || '—')}
       ${row('Присутствие', statusMap[g.attending] || g.attending)}
       ${row('Несовершеннолетний', g.is_minor ? `🔞 ${g.minor_age ? g.minor_age + ' лет' : 'да'}` : '—')}
-      ${row('📎 Заметка', g.note || '—')}
+      ${row('Заметка', g.note || '—')}
       ${row('Дата ответа', g.submitted_at ? new Date(g.submitted_at).toLocaleString('ru-RU') : '—')}
       ${row('Напоминание', g.reminded_at ? '✅ ' + new Date(g.reminded_at).toLocaleString('ru-RU') : '—')}
     </table>
@@ -305,7 +322,7 @@ function setChannel(channel) {
   const tgDiv    = document.getElementById('telegramChannel');
 
   if (channel === 'email') {
-    emailBtn.style.background = '#7c5cbf'; emailBtn.style.color = '#fff'; emailBtn.style.borderColor = '#7c5cbf';
+    emailBtn.style.background = '#c0152a'; emailBtn.style.color = '#fff'; emailBtn.style.borderColor = '#c0152a';
     tgBtn.style.background = '#fff'; tgBtn.style.color = '#555'; tgBtn.style.borderColor = '#ddd';
     emailDiv.style.display = 'block'; tgDiv.style.display = 'none';
   } else {
@@ -518,9 +535,9 @@ function renderChart(guests) {
 
   // Накопленные позиции: каждый следующий начинается там, где закончился предыдущий
   const segments = [
-    { label: '✅ Придут',    count: yes,   color: '#28a745', pct: pct(yes),   offset: 0 },
-    { label: '❌ Не придут', count: no,    color: '#dc3545', pct: pct(no),    offset: pct(yes) },
-    { label: '❔ Не знают',  count: maybe, color: '#ffc107', pct: pct(maybe), offset: pct(yes) + pct(no) },
+    { label: '✅ Придут',    count: yes,   color: '#c0fa85ff', pct: pct(yes),   offset: 0 },
+    { label: '❌ Не придут', count: no,    color: '#fd6279ff', pct: pct(no),    offset: pct(yes) },
+    { label: '❔ Не знают',  count: maybe, color: '#fffca0ff', pct: pct(maybe), offset: pct(yes) + pct(no) },
   ];
 
   chartEl.innerHTML = segments.map(s => `
@@ -529,7 +546,7 @@ function renderChart(guests) {
         <span>${s.label}</span>
         <span><b>${s.count}</b> (${s.pct}%)</span>
       </div>
-      <div style="background:#e9ecef;border-radius:6px;height:16px;position:relative;overflow:hidden">
+      <div style="background:#e5d4da42;border-radius:6px;height:16px;position:relative;overflow:hidden">
         <div style="position:absolute;left:${s.offset}%;width:${s.pct}%;background:${s.color};height:100%;border-radius:3px"></div>
       </div>
     </div>
@@ -559,11 +576,11 @@ function renderAgePie(guests) {
     const ay2 = cy + r * Math.sin(-Math.PI/2 + adultAngle);
     const large = adultAngle > Math.PI ? 1 : 0;
     slices = `
-      <path d="M${cx},${cy} L${ax1},${ay1} A${r},${r} 0 ${large},1 ${ax2},${ay2} Z" fill="#7c5cbf" opacity="0.85"/>
-      <path d="M${cx},${cy} L${ax2},${ay2} A${r},${r} 0 ${1-large},1 ${ax1},${ay1} Z" fill="#ffc107" opacity="0.85"/>
+      <path d="M${cx},${cy} L${ax1},${ay1} A${r},${r} 0 ${large},1 ${ax2},${ay2} Z" fill="#bcbcbcff" opacity="0.85"/>
+      <path d="M${cx},${cy} L${ax2},${ay2} A${r},${r} 0 ${1-large},1 ${ax1},${ay1} Z" fill="#eba0ffff" opacity="0.85"/>
     `;
   } else {
-    slices = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${adults > 0 ? '#7c5cbf' : '#ffc107'}" opacity="0.85"/>`;
+    slices = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${adults > 0 ? '#bcbcbcff' : '#eba0ffff'}" opacity="0.85"/>`;
   }
 
   el.innerHTML = `
@@ -571,11 +588,11 @@ function renderAgePie(guests) {
       <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">${slices}</svg>
       <div>
         <div style="display:flex;align-items:center;gap:0.4rem;margin-bottom:0.4rem">
-          <div style="width:12px;height:12px;border-radius:3px;background:#7c5cbf"></div>
+          <div style="width:12px;height:12px;border-radius:3px;background:#bcbcbcff"></div>
           <span style="font-size:0.85rem">Взрослые: <b>${adults}</b> (${Math.round(adults/total*100)}%)</span>
         </div>
         <div style="display:flex;align-items:center;gap:0.4rem">
-          <div style="width:12px;height:12px;border-radius:3px;background:#ffc107"></div>
+          <div style="width:12px;height:12px;border-radius:3px;background:#eba0ffff"></div>
           <span style="font-size:0.85rem">Дети: <b>${minors}</b> (${Math.round(minors/total*100)}%)</span>
         </div>
       </div>
@@ -665,7 +682,7 @@ function printGuestList() {
           `).join('')}
         </tbody>
       </table>
-      <button onclick="window.print()" style="margin-top:20px;padding:10px 20px;background:#7c5cbf;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ Печать</button>
+      <button onclick="window.print()" style="margin-top:20px;padding:10px 20px;background:#c0152a;color:#fff;border:none;border-radius:8px;cursor:pointer">🖨️ Печать</button>
     </body>
     </html>
   `);
@@ -676,7 +693,7 @@ function printGuestList() {
 function renderTimeline(guests) {
   const el = document.getElementById('analyticsTimeline');
   if (!el) return;
-  if (!guests.length) { el.innerHTML = '<p style="color:#999">Нет данных</p>'; return; }
+  if (!guests.length) { el.innerHTML = '<p style="color:#999; margin-top:-1px">Нет данных</p>'; return; }
 
   const byDate = {};
   guests.forEach(g => {
@@ -686,7 +703,7 @@ function renderTimeline(guests) {
   });
 
   const entries = Object.entries(byDate);
-  if (!entries.length) { el.innerHTML = '<p style="color:#999">Нет данных</p>'; return; }
+  if (!entries.length) { el.innerHTML = '<p style="color:#999; margin-top:-1px">Нет данных</p>'; return; }
 
   const max   = Math.max(...entries.map(([, v]) => v));
   const barW  = 28;
@@ -699,7 +716,7 @@ function renderTimeline(guests) {
     const x = 5 + i * (barW + gap);
     const y = chartH - h;
     return `
-      <rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="#7c5cbf" opacity="0.8"/>
+      <rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="3" fill="#bdf7ffff" opacity="0.8"/>
       <text x="${x + barW/2}" y="${y - 3}" text-anchor="middle" font-size="10" fill="#333" font-weight="600">${count}</text>
       <text x="${x + barW/2}" y="${chartH + 13}" text-anchor="middle" font-size="10" fill="#666">${date}</text>
     `;

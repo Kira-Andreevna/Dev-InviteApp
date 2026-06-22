@@ -4,6 +4,11 @@ let selectedTemplateId = null;
 let blocks = [];
 let editingSlug = null;
 window.design = {};
+let eventType = ''; // тип мероприятия для открыток без шаблона
+
+function updateEventType(val) {
+  eventType = val;
+}
 
 const BLOCK_LABELS = {
   hero:         '✏️ Заголовок',
@@ -24,7 +29,6 @@ function blockTypeLabel(type) {
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', async () => {
-  // Проверка авторизации
   const authRes = await fetch('/api/auth/me');
   const auth = await authRes.json();
   if (!auth.loggedIn) return window.location.href = '/login.html';
@@ -33,53 +37,72 @@ document.addEventListener('DOMContentLoaded', async () => {
   editingSlug = params.get('slug');
 
   if (editingSlug) {
-    // Режим редактирования существующей
     await loadExistingCard(editingSlug);
   } else {
-    // Режим создания — показываем выбор шаблона
-    await loadTemplates();
+    // Новая открытка — сразу открываем редактор, показываем поле типа мероприятия
+    const eventTypeGroup = document.getElementById('eventTypeGroup');
+    if (eventTypeGroup) eventTypeGroup.style.display = 'block';
+    initDesignPanel(window.design);
+    renderBlocksPanel();
+    renderPreview();
+    loadTemplatesIntoSidebar();
   }
 });
 
-async function loadTemplates() {
+async function loadTemplatesIntoSidebar() {
   const res = await fetch('/api/cards/templates');
   const templates = await res.json();
-  const list = document.getElementById('templatesList');
+  const list = document.getElementById('templatePickerList');
+  if (!list) return;
 
   list.innerHTML = `
-    <div class="template-card ${selectedTemplateId === null ? 'selected' : ''}" onclick="selectTemplate(null)" id="tpl-null">
-      <div style="height:160px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:3rem">✏️</div>
-      <div class="template-name">С нуля</div>
-    </div>
-    ${templates.map(t => `
-      <div class="template-card" onclick="selectTemplate(${t.id}, ${JSON.stringify(t.structure_json).replace(/"/g,'&quot;')})" id="tpl-${t.id}">
-        <div style="height:160px;background:linear-gradient(135deg,var(--primary),var(--accent));display:flex;align-items:center;justify-content:center;font-size:3rem">
-          ${t.name === 'Свадьба' ? '💍' : t.name === 'День рождения' ? '🎂' : '🎉'}
-        </div>
-        <div class="template-name">${t.name}</div>
+    <div style="display:flex;flex-direction:column;gap:0.4rem">
+      <div class="sidebar-template-item ${selectedTemplateId === null ? 'selected' : ''}"
+        onclick="sidebarSelectTemplate(null, null)" id="stpl-null">
+        <span>✏️</span> С нуля
       </div>
-    `).join('')}
+      ${templates.map(t => `
+        <div class="sidebar-template-item" id="stpl-${t.id}"
+          onclick="sidebarSelectTemplate(${t.id}, ${JSON.stringify(t.structure_json).replace(/"/g,'&quot;')})">
+          <span>${t.name === 'Свадьба' ? '💍' : t.name === 'День рождения' ? '🎂' : '🎉'}</span>
+          ${t.name}
+        </div>
+      `).join('')}
+    </div>
   `;
 }
 
-function selectTemplate(id, structure) {
-  selectedTemplateId = id;
-  document.querySelectorAll('.template-card').forEach(el => el.classList.remove('selected'));
-  document.getElementById(`tpl-${id}`)?.classList.add('selected');
-
-  if (structure && structure.blocks) {
-    blocks = structure.blocks.map(b => ({
-      type: b.type,
-      label: b.label,
-      value: '',
-      files: []
-    }));
+function toggleTemplatePicker() {
+  const list = document.getElementById('templatePickerList');
+  const isHidden = list.style.display === 'none';
+  list.style.display = isHidden ? 'block' : 'none';
+  if (isHidden && list.innerHTML.includes('spinner')) {
+    loadTemplatesIntoSidebar();
   }
 }
 
+function sidebarSelectTemplate(id, structure) {
+  selectedTemplateId = id;
+  document.querySelectorAll('.sidebar-template-item').forEach(el => el.classList.remove('selected'));
+  document.getElementById(`stpl-${id}`)?.classList.add('selected');
+
+  const nameEl = document.getElementById('selectedTemplateName');
+  if (nameEl) nameEl.textContent = id === null ? '' : document.getElementById(`stpl-${id}`)?.textContent?.trim() || '';
+
+  if (structure && structure.blocks) {
+    blocks = structure.blocks.map(b => ({ type: b.type, label: b.label, value: '', files: [] }));
+    renderBlocksPanel();
+    renderPreview();
+  }
+
+  // Скрываем список после выбора
+  document.getElementById('templatePickerList').style.display = 'none';
+}
+
+// Оставляем для обратной совместимости
+async function loadTemplates() { await loadTemplatesIntoSidebar(); }
+function selectTemplate(id, structure) { sidebarSelectTemplate(id, structure); }
 function startEditor() {
-  document.getElementById('stepTemplate').style.display = 'none';
-  document.getElementById('stepEditor').style.display = 'block';
   initDesignPanel(window.design);
   renderBlocksPanel();
   renderPreview();
@@ -100,8 +123,19 @@ async function loadExistingCard(slug) {
   blocks = content.blocks || [];
   window.design = content.design || {};
 
-  document.getElementById('stepTemplate').style.display = 'none';
-  document.getElementById('stepEditor').style.display = 'block';
+  // Загружаем тип мероприятия
+  eventType = content.eventType || '';
+  const eventTypeInput = document.getElementById('eventType');
+  if (eventTypeInput) eventTypeInput.value = eventType;
+
+  // Показываем поле типа мероприятия всегда при редактировании
+  const eventTypeGroup = document.getElementById('eventTypeGroup');
+  if (eventTypeGroup) eventTypeGroup.style.display = 'block';
+
+  // Скрываем секцию выбора шаблона при редактировании
+  const tplSection = document.getElementById('templatePickerSection');
+  if (tplSection) tplSection.style.display = 'none';
+
   initDesignPanel(window.design);
   renderBlocksPanel();
   renderPreview();
@@ -344,6 +378,8 @@ async function uploadFiles(blockIndex, files, isVideo = false) {
       if (!blocks[blockIndex].files) blocks[blockIndex].files = [];
       blocks[blockIndex].files.push(data.url);
       if (isVideo) blocks[blockIndex].value = data.url;
+    } else if (data.error) {
+      alert('Ошибка загрузки: ' + data.error);
     }
   }
   renderBlocksPanel();
@@ -368,9 +404,15 @@ function layoutStyle(block) {
   switch (block.layout) {
     case 'left':     return 'display:flex;flex-direction:row;align-items:flex-start;gap:1.2rem;';
     case 'right':    return 'display:flex;flex-direction:row-reverse;align-items:flex-start;gap:1.2rem;';
-    case 'centered': return 'text-align:center;';
+    case 'centered': return 'text-align:center;display:flex;flex-direction:column;align-items:center;';
     default:         return '';
   }
+}
+
+function textAlignStyle(block) {
+  if (block.layout === 'centered') return 'text-align:center;';
+  if (block.layout === 'left' || block.layout === 'right') return 'text-align:left;';
+  return '';
 }
 
 function mediaSizeStyle(block) {
@@ -389,6 +431,7 @@ function renderPreviewBlock(block) {
   const fs  = (d.fontSizeBase  || 16) + 'px';
   const fhs = Math.round((d.fontSizeBase || 16) * (d.fontSizeRatio || 1.8)) + 'px';
   const tc  = d.colorText    || 'inherit';
+  const hc  = d.colorHeading || '#ffffff';
   const pc  = d.colorPrimary || 'var(--primary)';
   const h1  = d.colorHero1   || 'var(--primary)';
   const h2  = d.colorHero2   || 'var(--accent)';
@@ -420,66 +463,65 @@ function renderPreviewBlock(block) {
     case 'hero':
       return `<div class="preview-hero preview-hero--${d.heroStyle || 'gradient'}" style="${heroStyleCSS}border-radius:${r} ${r} 0 0">
         ${d.heroStyle === 'wave' ? `<div class="hero-wave-shape"></div>` : ''}
-        <h1 style="font-family:${fh};font-size:${fhs}">${escHtml(block.value || 'Заголовок мероприятия')}</h1>
-        ${block.subtitle ? `<p style="font-family:${fb};font-size:${fs}">${escHtml(block.subtitle)}</p>` : ''}
+        <h1 style="font-family:${fh};font-size:${fhs};color:${hc}">${escHtml(block.value || 'Заголовок мероприятия')}</h1>
+        ${block.subtitle ? `<p style="font-family:${fb};font-size:${fs};color:${hc}">${escHtml(block.subtitle)}</p>` : ''}
       </div>`;
 
     case 'story':
       return `${divider}<div class="preview-block" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
         <div style="flex:1">
 
-        <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
+        <p style="font-family:${fb};font-size:${fs};color:${tc};${textAlignStyle(block)}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'details':
       return `${divider}<div class="preview-block" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
         <div style="flex:1">
 
-        <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
+        <p style="font-family:${fb};font-size:${fs};color:${tc};${textAlignStyle(block)}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'wishes':
       return `${divider}<div class="preview-block" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
         <div style="flex:1">
     
-        <p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.value || '')}</p></div>
+        <p style="font-family:${fb};font-size:${fs};color:${tc};font-weight:bold;font-style:italic;${textAlignStyle(block)}">${escHtml(block.value || '')}</p></div>
       </div>`;
 
     case 'date':
-      return `${divider}<div class="preview-date" style="border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
-        <div class="preview-date-text">
-          ${block.value ? `<p style="font-family:${fb};font-size:${fs};color:${tc}">${formatDate(block.value)}</p>` : '<p style="color:var(--text-muted)">Дата не указана</p>'}
+      return `${divider}<div class="preview-date" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div class="preview-date-text" style="flex:1;${textAlignStyle(block)}">
+          ${block.value ? `<p style="font-family:${fb};font-size:${fs};color:${tc};font-weight:bold;font-style:italic">${formatDate(block.value)}</p>` : '<p style="color:var(--text-muted)">Дата не указана</p>'}
         </div>
       </div>`;
 
     case 'event-time':
-      return `${divider}<div class="preview-date" style="border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
-        <div class="preview-date-text">
-          ${block.time ? `<p style="font-family:${fb};font-size:${fs};color:${tc}">${block.time}</p>` : '<p style="color:var(--text-muted)">Время не указано</p>'}
+      return `${divider}<div class="preview-date" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div class="preview-date-text" style="flex:1;${textAlignStyle(block)}">
+          ${block.time ? `<p style="font-family:${fb};font-size:${fs};color:${tc};font-weight:bold;font-style:italic">${block.time}</p>` : '<p style="color:var(--text-muted)">Время не указано</p>'}
         </div>
       </div>`;
 
     case 'event-place':
-      return `${divider}<div class="preview-date" style="border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
-        <div class="preview-date-text">
-          ${block.place ? `<p style="font-family:${fb};font-size:${fs};color:${tc}">${escHtml(block.place)}</p>` : '<p style="color:var(--text-muted)">Место не указано</p>'}
+      return `${divider}<div class="preview-date" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div class="preview-date-text" style="flex:1;${textAlignStyle(block)}">
+          ${block.place ? `<p style="font-family:${fb};font-size:${fs};color:${tc};font-weight:bold;font-style:italic">${escHtml(block.place)}</p>` : '<p style="color:var(--text-muted)">Место не указано</p>'}
         </div>
       </div>`;
 
     case 'palette':
-      return `${divider}<div class="preview-palette" style="border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
-        
+      return `${divider}<div class="preview-palette" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
+        <div style="flex:1;${textAlignStyle(block)}">
         <div class="color-palette">
           ${(block.colors || []).map(c => `<div class="color-swatch" style="background:${c}" title="${c}"></div>`).join('')}
-        </div>
+        </div></div>
       </div>`;
 
     case 'gallery':
       if (!block.files || !block.files.length) return '';
       return `${divider}<div class="preview-gallery" style="${ls}border-radius:${r};box-shadow:${shadow};background:${bc};margin-bottom:var(--inv-block-gap,16px)">
-        <div style="flex:1">
-
-        <div class="gallery-grid" style="${ms}border-radius:${r}">
+        <div style="flex:1;${textAlignStyle(block)}">
+        <div class="gallery-grid${block.layout === 'centered' ? ' gallery-grid--centered' : ''}" style="${ms}border-radius:${r}">
           ${block.files.map(f => `<img src="${f}" alt="фото" style="border-radius:${r}">`).join('')}
         </div></div>
       </div>`;
@@ -530,7 +572,7 @@ async function saveCard() {
   btn.textContent = 'Сохранение...';
   btn.disabled = true;
 
-  const body = { title, template_id: selectedTemplateId, content_json: { blocks, design: window.design } };
+  const body = { title, template_id: selectedTemplateId, content_json: { blocks, design: window.design, eventType: eventType || '' } };
 
   try {
     let res;
@@ -582,11 +624,3 @@ function ytEmbed(url) {
   const match = url.match(/(?:v=|youtu\.be\/)([^&?/]+)/);
   return match ? `https://www.youtube.com/embed/${match[1]}` : url;
 }
-
-    // <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🎬 Видео</h2>
-    // <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🖼 Фотогалерея</h2>
-    // <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">🎨 Цветовая палитра</h2>
-    // <h2 style="font-family:${fh};font-size:${fhs};color:${pc}">💌 Пожелания</h2>
-    //<h2 style="font-family:${fh};font-size:${fhs};color:${pc}">Дата и место</h2>
-    //<h2 style="font-family:${fh};font-size:${fhs};color:${pc}">📌 Важные детали</h2>
-    //<h2 style="font-family:${fh};font-size:${fhs};color:${pc}">📖 Наша история</h2>

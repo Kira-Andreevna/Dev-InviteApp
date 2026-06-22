@@ -5,11 +5,23 @@ const { notifyOrganizerRsvp, sendInviteToGuest } = require('../services/notifier
 async function getRsvpStats(req, res) {
   try {
     const [cards] = await db.query(
-      'SELECT id, title, slug, event_date, notify_email, notify_tg_chat_id, reminder_days FROM cards WHERE slug = ? AND user_id = ?',
+      'SELECT id, title, slug, event_date, content_json, notify_email, notify_tg_chat_id, reminder_days FROM cards WHERE slug = ? AND user_id = ?',
       [req.params.slug, req.session.userId]
     );
     if (!cards.length) return res.status(404).json({ error: 'Не найдено' });
     const card = cards[0];
+
+    // Авто-синхронизация: если event_date пустая — берём из блока date в content_json
+    if (!card.event_date) {
+      try {
+        const content = typeof card.content_json === 'string' ? JSON.parse(card.content_json) : card.content_json;
+        const dateBlock = (content?.blocks || []).find(b => b.type === 'date');
+        if (dateBlock?.value) {
+          await db.query('UPDATE cards SET event_date = ? WHERE id = ?', [dateBlock.value, card.id]);
+          card.event_date = dateBlock.value;
+        }
+      } catch (e) { /* ignore */ }
+    }
 
     // reminder_time и tg_bot_token — могут отсутствовать до миграции
     try {
@@ -50,14 +62,39 @@ async function saveNotifySettings(req, res) {
   const { notify_email, notify_tg_chat_id, event_date, reminder_days, reminder_time, tg_bot_token } = req.body;
   try {
     const [cards] = await db.query(
-      'SELECT id FROM cards WHERE slug = ? AND user_id = ?',
+      'SELECT id, content_json, event_date FROM cards WHERE slug = ? AND user_id = ?',
       [req.params.slug, req.session.userId]
     );
     if (!cards.length) return res.status(404).json({ error: 'Не найдено' });
 
+    const card = cards[0];
+    const prevDate = card.event_date;
+    const newDate = event_date || null;
+    let dateChanged = false;
+
+    // Если дата изменилась — синхронизируем блок date в content_json
+    let updatedContent = card.content_json;
+    const prevDateStr = card.event_date
+      ? (card.event_date instanceof Date
+          ? card.event_date.toISOString().split('T')[0]
+          : String(card.event_date).split('T')[0])
+      : null;
+
+    if (newDate && newDate !== prevDateStr) {
+      try {
+        const content = typeof updatedContent === 'string' ? JSON.parse(updatedContent) : updatedContent;
+        const dateBlock = (content.blocks || []).find(b => b.type === 'date');
+        if (dateBlock) {
+          dateBlock.value = newDate;
+          updatedContent = JSON.stringify(content);
+          dateChanged = true;
+        }
+      } catch (e) { /* ignore */ }
+    }
+
     await db.query(
-      'UPDATE cards SET notify_email=?, notify_tg_chat_id=?, event_date=?, reminder_days=? WHERE slug=?',
-      [notify_email || null, notify_tg_chat_id || null, event_date || null, reminder_days || 3, req.params.slug]
+      'UPDATE cards SET notify_email=?, notify_tg_chat_id=?, event_date=?, reminder_days=?, content_json=? WHERE slug=?',
+      [notify_email || null, notify_tg_chat_id || null, newDate, reminder_days || 3, updatedContent, req.params.slug]
     );
 
     // reminder_time и tg_bot_token — сохраняем отдельно (могут отсутствовать до миграции)
@@ -68,7 +105,7 @@ async function saveNotifySettings(req, res) {
       );
     } catch (e) { /* колонки ещё не созданы */ }
 
-    res.json({ success: true });
+    res.json({ success: true, dateChanged, dateUpdatedInCard: dateChanged });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Ошибка сервера' });

@@ -4,91 +4,118 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Расширенная RSVP-отчётность</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/main.css">
   <style>
+    body { font-family: 'Inter', system-ui, sans-serif; 
+      background-image: url('/bg-rsvp-manager.png');
+      background-size: cover;
+      background-position: center top;
+      background-attachment: fixed;
+      background-repeat: no-repeat;
+      background-color: #fdf0f4;}
+    
     .rsvp-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-    .stat-card { background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); text-align: center; }
-    .stat-number { font-size: 2.5rem; font-weight: bold; color: #7c5cbf; }
-    .stat-label { color: #666; margin-top: 0.5rem; }
-    .tabs { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid #eee; flex-wrap: wrap; }
-    .tab { padding: 0.85rem 1.25rem; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.2s; font-size: 0.9rem; }
-    .tab.active { border-bottom-color: #7c5cbf; color: #7c5cbf; font-weight: bold; }
-    .tab:hover { background: #f5f5f5; }
-    .tab-content { display: none; }
+    .stat-label { color: #9a7a82; margin-top: 0.5rem; font-size: 0.88rem; }
+    .stat-card {background: rgba(255,255,255,0.88); border-radius: 16px; padding: 1.5rem; text-align: center; border: 1px solid rgba(232,160,180,0.25); animation: statPulse 3s ease-in-out infinite;}
+    .stat-card .stat-num { font-size: 2.5rem; font-weight: bold; color: #ff0019; font-family: 'Playfair Display', Georgia, serif; line-height: 1.5; }
+    .tabs { display: flex; gap: 0; margin-bottom: 2rem; border-bottom: 2px solid #f0dde3; flex-wrap: wrap;}
+    .tab { padding: 0.85rem 1.5rem; cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.25s ease; font-size: 0.95rem; font-weight: 500; color: #947a81; background: transparent; position: relative; }
+    .tab:hover { background: #d6b4bdc8; color: #9c4a65; border-radius: 0.75rem 0.75rem 0 0; }
+    .tab.active { border-bottom-color: #ff0019; color: #ff0019; font-weight: 600; }
+    .tab.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; border-radius: 3px 3px 0 0; }
+    .tab-content { display: none; animation: fadeIn 0.25s ease; }
     .tab-content.active { display: block; }
-    .guests-table { width: 100%; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .guests-table th, .guests-table td { padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid #eee; font-size: 0.9rem; }
-    .guests-table th { background: #f8f8f8; font-weight: 600; }
-    .guests-table tr:hover { background: #f9f9f9; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .guests-table { width: 100%; background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); border-radius: 16px; overflow: hidden; box-shadow: 0 2px 16px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.6); }
+    .guests-table th, .guests-table td { padding: 0.85rem 1rem; text-align: left; border-bottom: 1px solid rgba(240,221,227,0.6); font-size: 0.9rem; }
+    .guests-table th { background: rgba(255,255,255,0.5); font-weight: 600; color: #2d2020; }
+    .guests-table tr:hover { background: rgba(255,255,255,0.4); }
     .status-badge { display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px; font-size: 0.82rem; font-weight: 500; }
-    .status-yes { background: #d4edda; color: #155724; }
+    /* .status-yes { background: #d4edda; color: #155724; }
     .status-no { background: #f8d7da; color: #721c24; }
-    .status-maybe { background: #fff3cd; color: #856404; }
-    .settings-form { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .status-maybe { background: #fff3cd; color: #856404; } */
+     .status-yes { background: rgb(231, 255, 207); color: #278b25; } 
+    .status-no { background: rgb(255, 211, 217); color: #a42632; }
+    .status-maybe { background: rgb(250, 253, 209); color: #c69a17; }
+    .settings-form { background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); padding: 2rem; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.6); }
     .form-group { margin-bottom: 1.5rem; }
-    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-    .form-group input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-    .form-group small { color: #888; font-size: 0.82rem; margin-top: 0.25rem; display: block; }
-    .bulk-invite { background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: #2d2020; }
+    .form-group input { width: 100%; padding: 0.75rem; border: 1.5px solid #f0dde3; border-radius: 10px; box-sizing: border-box; font-family: inherit; background: #fff; transition: border-color 0.2s; }
+    .form-group input:focus { outline: none; border-color: #c9748a; }
+    .form-group small { color: #9a7a82; font-size: 0.82rem; margin-top: 0.25rem; display: block; }
+    .bulk-invite { background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); padding: 2rem; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.6); }
     .guest-input-row { display: flex; gap: 1rem; margin-bottom: 0.75rem; }
-    .guest-input-row input { flex: 1; padding: 0.75rem; border: 1px solid #ddd; border-radius: 8px; }
-    .guest-input-row button { padding: 0.75rem 1rem; background: #dc3545; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
-    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-    .btn-primary { background: #7c5cbf; color: #fff; }
-    .btn-primary:hover { background: #6a4da8; }
-    .btn-success { background: #28a745; color: #fff; }
-    .btn-success:hover { background: #218838; }
-    .btn-outline { background: #fff; color: #555; border: 1px solid #ddd; }
-    .btn-outline:hover { background: #f5f5f5; }
-    .btn-sm { padding: 0.5rem 1rem; font-size: 0.85rem; }
-    .notification-log { background: #fff; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    .notification-item { padding: 1rem; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+    .guest-input-row input { flex: 1; padding: 0.75rem; border: 1.5px solid #f0dde3; border-radius: 10px; font-family: inherit; }
+    /* 3. кнопка удаления строки → серая */
+    .guest-input-row button { padding: 0.75rem 1rem; background: #e0e0e0; color: #555; border: none; border-radius: 10px; cursor: pointer; transition: background 0.2s; font-weight: 600; }
+    .guest-input-row button:hover { background: #c8c8c8; }
+    /* 5. кнопки без градиента */
+    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 50px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-family: inherit; font-size: 0.9rem; }
+    .btn-primary { background: #ff0000; color: #fff; box-shadow: 0 3px 10px rgba(192,21,42,0.2); }
+    .btn-primary:hover { background: #a01020; box-shadow: 0 5px 16px rgba(192,21,42,0.3); }
+    .btn-success { background: #c9748a; color: #fff; box-shadow: 0 3px 10px rgba(201,116,138,0.25); }
+    .btn-success:hover { background: #a85570; }
+    /* 3. кнопки выхода/удаления → серые */
+    .btn-danger { background: #9e9e9e; color: #fff; }
+    .btn-danger:hover { background: #757575; }
+    .btn-outline { background: #fff; color: #555; border: 1.5px solid #e0dde3; }
+    .btn-outline:hover { background: #fdf6f8; border-color: #c9748a; color: #c9748a; }
+    .btn-sm { padding: 0.45rem 1rem; font-size: 0.85rem; }
+    .notification-log { background: rgba(255,255,255,0.82); backdrop-filter: blur(10px); padding: 1.5rem; border-radius: 16px; box-shadow: 0 2px 16px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.6); }
+    .notification-item { padding: 1rem; border-bottom: 1px solid #f0dde3; display: flex; justify-content: space-between; align-items: center; }
     .notification-item:last-child { border-bottom: none; }
-    .analytics-section { margin-top: 2rem; }
-    .analytics-section h3 { font-size: 1rem; font-weight: 600; color: #333; margin-bottom: 0.75rem; }
+    .analytics-section h3 { font-size: 1rem; font-weight: 600; color: #2d2020; margin-bottom: 1rem;}
+    /* 4. уменьшаем модальное окно анкеты гостя */
+    #guestModalOverlay > div { max-width: 360px; padding: 1.4rem; border-radius: 16px; }
+    #guestModalOverlay h2 { font-size: 1.1rem; margin-bottom: 1rem; }
   </style>
 </head>
 <body>
   <div class="rsvp-container">
-    <h1 id="cardTitle">Расширенная RSVP-отчётность</h1>
+    <h1>Расширенная RSVP-отчётность</h1>
+    <p>Вся информация о гостях для продвинутых организаторов</p>
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-number" id="statTotal">0</div>
+        <div class="stat-num" id="statTotal">0</div>
         <div class="stat-label">📩 Всего ответов</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="statYes">0</div>
+        <div class="stat-num" id="statYes">0</div>
         <div class="stat-label">✅ Придут</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="statNo">0</div>
+        <div class="stat-num" id="statNo">0</div>
         <div class="stat-label">❌ Не придут</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="statMaybe">0</div>
+        <div class="stat-num" id="statMaybe">0</div>
         <div class="stat-label">❔ Не определились</div>
       </div>
       <div class="stat-card">
-        <div class="stat-number" id="statMinors">0</div>
+        <div class="stat-num" id="statMinors">0</div>
         <div class="stat-label">🔞 Несовершеннолетних</div>
       </div>
     </div>
 
     <div class="tabs">
       <div class="tab active" data-tab="guests">👥 Список гостей</div>
-      <div class="tab" data-tab="analytics">📊 Аналитика</div>
+      <div class="tab" data-tab="analytics">📊 Детальная аналитика</div>
       <div class="tab" data-tab="settings">⚙️ Настройки уведомлений</div>
       <div class="tab" data-tab="invite">📧 Массовая рассылка</div>
       <div class="tab" data-tab="logs">📤 Логи уведомлений</div>
     </div>
+    
 
     <!-- Список гостей -->
     <div class="tab-content active" id="tab-guests">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;gap:1rem">
         <input type="text" id="searchGuests" placeholder="🔎 Поиск по имени или email..."
-          style="padding:0.75rem;border:1px solid #ddd;border-radius:8px;flex:1;max-width:600px">
+          style="padding:0.75rem;border:1px solid #ddd;border-radius:50px;flex:1;max-width:600px">
         <div style="display:flex;gap:0.5rem;flex-shrink:0">
           <button class="btn btn-outline btn-sm" onclick="exportGuestsCSV()">💾 Экспорт CSV</button>
           <button class="btn btn-outline btn-sm" onclick="printGuestList()">🖨️ Печать</button>
@@ -99,7 +126,7 @@
           <tr>
             <th>ФИО</th>
             <th>Email</th>
-            <th>Присутствие</th>
+            <th style="min-width:145px">Присутствие</th>
             <th title="Несовершеннолетний гость">Несовершеннолетний</th>
             <th title="Когда гость заполнил анкету">Ответ</th>
             <th title="Когда отправлено автоматическое напоминание">Напоминание</th>
@@ -113,13 +140,12 @@
     <!-- Аналитика -->
     <div class="tab-content" id="tab-analytics">
       <div style="background:#fff;padding:2rem;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.1)">
-        <h2 style="margin-bottom:0">Детальная аналитика</h2>
 
         <!-- Гистограмма и круговая диаграмма рядом -->
         <div class="analytics-section" style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;align-items:start">
           <div>
             <h3>Активность ответов</h3>
-            <p style="color:#666;font-size:0.85rem;margin:-0.5rem 0 0.75rem">Когда гости заполняли анкеты</p>
+            <p style="color:#666;font-size:0.85rem;margin:-0.5rem 0 1.75rem">Когда гости заполняли анкеты</p>
             <div id="analyticsTimeline"></div>
           </div>
           <div>
@@ -129,25 +155,25 @@
           </div>
         </div>
 
-        <div class="analytics-section">
+        <div class="analytics-section" style="margin-top:1.5rem">
           <h3>Распределение ответов</h3>
           <div id="analyticsChart"></div>
         </div>
 
-        <div class="analytics-section">
+        <div class="analytics-section" style="margin-top: 1.75rem">
           <h3>Email напоминания</h3>
-          <div style="background:#f8f9fa;padding:1rem;border-radius:8px">
+          <div style="background:#e5d4da42;padding:1rem;border-radius:8px">
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
               <div style="text-align:center;padding:0.75rem;background:#fff;border-radius:8px">
-                <div style="font-size:1.75rem;font-weight:bold;color:#7c5cbf" id="analyticsAttendingEmail">0</div>
+        <div style="font-size:1.75rem;font-weight:bold;color:#979bff" id="analyticsAttendingEmail">0</div>
                 <div style="font-size:0.85rem;color:#666;margin-top:0.25rem">Придут и указали email</div>
               </div>
               <div style="text-align:center;padding:0.75rem;background:#fff;border-radius:8px">
-                <div style="font-size:1.75rem;font-weight:bold;color:#28a745" id="analyticsReminded">0</div>
+                <div style="font-size:1.75rem;font-weight:bold;color:#c0fa85ff" id="analyticsReminded">0</div>
                 <div style="font-size:0.85rem;color:#666;margin-top:0.25rem">Напоминание отправлено</div>
               </div>
               <div style="text-align:center;padding:0.75rem;background:#fff;border-radius:8px">
-                <div style="font-size:1.75rem;font-weight:bold;color:#ffc107" id="analyticsPendingReminders">0</div>
+                <div style="font-size:1.75rem;font-weight:bold;color:#ffad76" id="analyticsPendingReminders">0</div>
                 <div style="font-size:0.85rem;color:#666;margin-top:0.25rem">Ожидают напоминания</div>
               </div>
             </div>
@@ -180,6 +206,8 @@
           <div class="form-group">
             <label>Дата мероприятия</label>
             <input type="date" name="event_date">
+            <small id="eventDateHint" style="color:#c9748a;font-size:0.82rem;margin-top:0.25rem;display:block"></small>
+            <small style="color:#888;font-size:0.82rem">Изменение даты здесь обновит её и в самом пригласительном</small>
           </div>
           <div class="form-group">
             <label>За сколько дней отправить напоминание</label>
@@ -190,11 +218,11 @@
             <input type="time" name="reminder_time" value="10:00">
             <small>По серверному времени</small>
           </div>
-          <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+          <button type="submit" class="btn btn-primary">✓ Сохранить настройки</button>
         </form>
 
         <!-- Инструкция справа -->
-        <div style="background:#f0f7ff;border:1px solid #b3d4f5;border-radius:12px;padding:1.5rem">
+        <div style="background:#efedee3d;border:1px solid #afa5ab;border-radius:12px;padding:1.5rem">
           <div style="font-weight:600;font-size:1rem;margin-bottom:0.75rem">Как подключить Telegram-бота</div>
           <ol style="margin:0;padding-left:1.25rem;line-height:2;color:#444;font-size:0.9rem">
             <li>Напишите <b>@BotFather</b> в Telegram</li>
@@ -205,7 +233,7 @@
             <li>Напишите <code>/start</code> вашему боту — иначе он не сможет вам писать</li>
             <li>Сохраните настройки</li>
           </ol>
-          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #c8e0f5;font-size:0.9rem;color:#444">
+          <div style="margin-top:1rem;padding-top:1rem;border-top:1px solid #d8dbdd;font-size:0.9rem;color:#444">
             <b>Что умеет бот:</b>
             <ul style="margin:0.5rem 0 0;padding-left:1.25rem;line-height:1.9">
               <li>Уведомляет вас о каждом новом ответе гостя</li>
@@ -220,8 +248,7 @@
     <!-- Массовая рассылка -->
     <div class="tab-content" id="tab-invite">
       <div class="bulk-invite">
-        <h2 style="margin-bottom:1rem">Отправить приглашения</h2>
-        <p style="color:#666;margin-bottom:1rem;font-size:0.9rem">Список гостей сохраняется автоматически для этой открытки</p>
+        <p style="color:#666;margin-bottom:1rem;font-size:0.9rem">📌Список гостей сохраняется автоматически для этой открытки</p>
         <div id="guestInputs">
           <div class="guest-input-row">
             <input type="text" placeholder="Имя гостя" class="guest-name">
@@ -230,9 +257,9 @@
           </div>
         </div>
         <div style="display:flex;gap:1rem;margin-top:1rem;flex-wrap:wrap">
-          <button class="btn btn-success" onclick="addGuestRow()">➕ Добавить гостя</button>
+          <button class="btn btn-success" onclick="addGuestRow()">+ Добавить гостя</button>
           <button class="btn btn-primary" onclick="sendBulkInvites()">📨 Отправить всем</button>
-          <button class="btn btn-outline" onclick="saveGuestList()">✔️ Сохранить список</button>
+          <button class="btn btn-outline" onclick="saveGuestList()">✓ Сохранить список</button>
           <button class="btn btn-outline" onclick="clearGuestList()">🗑️ Очистить</button>
         </div>
         <div id="sendResults" style="margin-top:1rem;"></div>
@@ -258,3 +285,6 @@
   <script src="/js/rsvp-manager.js"></script>
 </body>
 </html>
+
+
+
