@@ -6,8 +6,99 @@ let editingSlug = null;
 window.design = {};
 let eventType = ''; // тип мероприятия для открыток без шаблона
 
+const DRAFT_KEY_PREFIX = 'invitecard_editor_draft_';
+let _draftTimer = null;
+let _editorReady = false;
+
+function getDraftKey(slug) {
+  return DRAFT_KEY_PREFIX + (slug ?? editingSlug ?? 'new');
+}
+
+function collectEditorState() {
+  const titleEl = document.getElementById('cardTitle');
+  return {
+    title: titleEl ? titleEl.value : '',
+    selectedTemplateId,
+    blocks,
+    design: window.design,
+    eventType,
+    editingSlug,
+    savedAt: Date.now()
+  };
+}
+
+function saveDraft() {
+  if (!_editorReady) return;
+  try {
+    sessionStorage.setItem(getDraftKey(), JSON.stringify(collectEditorState()));
+  } catch (_) {}
+}
+
+function scheduleDraftSave() {
+  clearTimeout(_draftTimer);
+  _draftTimer = setTimeout(saveDraft, 400);
+}
+window.scheduleDraftSave = scheduleDraftSave;
+
+function loadDraft(slug) {
+  try {
+    const raw = sessionStorage.getItem(getDraftKey(slug));
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function clearDraft() {
+  sessionStorage.removeItem(getDraftKey());
+  sessionStorage.removeItem(getDraftKey('new'));
+}
+
+function applyDraftState(draft) {
+  const titleEl = document.getElementById('cardTitle');
+  if (titleEl && draft.title != null) titleEl.value = draft.title;
+  selectedTemplateId = draft.selectedTemplateId ?? null;
+  blocks = draft.blocks || [];
+  window.design = draft.design || {};
+  eventType = draft.eventType || '';
+  const eventTypeInput = document.getElementById('eventType');
+  if (eventTypeInput) eventTypeInput.value = eventType;
+  if (draft.editingSlug && !editingSlug) {
+    setEditingSlug(draft.editingSlug);
+  }
+}
+
+function setEditingSlug(slug) {
+  const prevKey = getDraftKey();
+  editingSlug = slug;
+  const newKey = getDraftKey();
+  if (prevKey !== newKey) {
+    const draft = sessionStorage.getItem(prevKey);
+    if (draft) {
+      sessionStorage.setItem(newKey, draft);
+      sessionStorage.removeItem(prevKey);
+    }
+  }
+  if (slug) {
+    history.replaceState(null, '', `/editor?slug=${slug}`);
+  }
+}
+
+function showDraftRestoredNotice() {
+  const el = document.createElement('div');
+  el.textContent = 'Восстановлен несохранённый черновик';
+  el.style.cssText = 'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);background:#2d2020;color:#fff;padding:0.6rem 1.2rem;border-radius:8px;font-size:0.85rem;z-index:9999;opacity:0;transition:opacity 0.3s';
+  document.body.appendChild(el);
+  requestAnimationFrame(() => { el.style.opacity = '1'; });
+  setTimeout(() => {
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
+}
+
 function updateEventType(val) {
   eventType = val;
+  scheduleDraftSave();
 }
 
 const BLOCK_LABELS = {
@@ -39,13 +130,39 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (editingSlug) {
     await loadExistingCard(editingSlug);
   } else {
-    // Новая открытка — сразу открываем редактор, показываем поле типа мероприятия
     const eventTypeGroup = document.getElementById('eventTypeGroup');
     if (eventTypeGroup) eventTypeGroup.style.display = 'block';
+    if (!loadDraft()) {
+      initDesignPanel(window.design);
+      renderBlocksPanel();
+      renderPreview();
+    }
+    loadTemplatesIntoSidebar();
+  }
+
+  const draft = loadDraft();
+  if (draft) {
+    applyDraftState(draft);
+    if (editingSlug) {
+      const tplSection = document.getElementById('templatePickerSection');
+      if (tplSection) tplSection.style.display = 'none';
+    }
     initDesignPanel(window.design);
     renderBlocksPanel();
     renderPreview();
-    loadTemplatesIntoSidebar();
+  }
+
+  document.getElementById('cardTitle')?.addEventListener('input', scheduleDraftSave);
+  _editorReady = true;
+  if (draft) showDraftRestoredNotice();
+});
+
+window.addEventListener('pagehide', () => {
+  clearTimeout(_draftTimer);
+  if (_editorReady) {
+    try {
+      sessionStorage.setItem(getDraftKey(), JSON.stringify(collectEditorState()));
+    } catch (_) {}
   }
 });
 
@@ -93,6 +210,7 @@ function sidebarSelectTemplate(id, structure) {
     blocks = structure.blocks.map(b => ({ type: b.type, label: b.label, value: '', files: [] }));
     renderBlocksPanel();
     renderPreview();
+    scheduleDraftSave();
   }
 
   // Скрываем список после выбора
@@ -198,12 +316,14 @@ function toggleBlockLayout(i) {
   if (!blocks[i].layout) blocks[i].layout = 'stack';
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 
 function setBlockLayout(i, layout) {
   blocks[i].layout = layout;
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 
 function renderBlockInput(block, i) {
@@ -288,6 +408,7 @@ function updateBlock(i, key, value) {
   blocks[i][key] = value;
   clearTimeout(_blockTimer);
   _blockTimer = setTimeout(() => renderPreview(), 150);
+  scheduleDraftSave();
 }
 
 function moveBlock(i, dir) {
@@ -296,12 +417,14 @@ function moveBlock(i, dir) {
   [blocks[i], blocks[j]] = [blocks[j], blocks[i]];
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 
 function removeBlock(i) {
   blocks.splice(i, 1);
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 
 function toggleBlockPicker() {
@@ -331,6 +454,7 @@ function addBlockType(type) {
   document.getElementById('blockTypePicker').style.display = 'none';
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 
 // Цвета
@@ -339,15 +463,18 @@ function addColor(i) {
   blocks[i].colors.push('#7c5cbf');
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 function updateColor(i, ci, val) {
   blocks[i].colors[ci] = val;
   renderPreview();
+  scheduleDraftSave();
 }
 function removeColor(i, ci) {
   blocks[i].colors.splice(ci, 1);
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 
 // Загрузка файлов
@@ -367,8 +494,7 @@ async function uploadFiles(blockIndex, files, isVideo = false) {
       });
       const data = await res.json();
       if (data.slug) {
-        editingSlug = data.slug;
-        history.replaceState(null, '', `/editor?slug=${editingSlug}`);
+        setEditingSlug(data.slug);
       }
     }
 
@@ -384,12 +510,14 @@ async function uploadFiles(blockIndex, files, isVideo = false) {
   }
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 
 function removeFile(blockIndex, fileIndex) {
   blocks[blockIndex].files.splice(fileIndex, 1);
   renderBlocksPanel();
   renderPreview();
+  scheduleDraftSave();
 }
 
 // ===== Превью =====
@@ -590,12 +718,12 @@ async function saveCard() {
       });
       const data = await res.json();
       if (data.slug) {
-        editingSlug = data.slug;
-        history.replaceState(null, '', `/editor?slug=${editingSlug}`);
+        setEditingSlug(data.slug);
       }
     }
 
     if (res.ok) {
+      clearDraft();
       btn.textContent = '✓ Сохранено';
       setTimeout(() => { btn.textContent = 'Сохранить'; btn.disabled = false; }, 2000);
     } else {
